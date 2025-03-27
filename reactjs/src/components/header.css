@@ -1,0 +1,243 @@
+/* Header Styles */
+.navbar {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .navbar.scrolled {
+    padding: 10px 0;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+  
+  /* Brand Logo */
+  .brand-container {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+  }
+  
+  .brand-container:hover {
+    transform: scale(1.05);
+  }
+  
+  .brand-logo {
+    height: 40px;
+    width: auto;
+    transition: all 0.3s ease;
+  }
+  
+  .brand-name {
+    font-weight: 300;
+    font-size: 1.2rem;
+    margin-left: 10px;
+    letter-spacing: 1px;
+    color: #333;
+  }
+  
+  /* Navigation Links */
+  .nav-link {
+    font-weight: 500;
+    color: #333 !important;
+    margin: 0 10px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #3a7bd5;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-link:hover::after {
+    width: 100%;
+  }
+  
+  .nav-link:hover {
+    color: #3a7bd5 !important;
+  }
+  
+  /* Right Side Icons */
+  .nav-icons {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  /* User Dropdown */
+  .user-dropdown {
+    position: relative;
+  }
+  
+  .user-btn {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 20px;
+  }
+  
+  .user-btn:hover {
+    color: #3a7bd5;
+    background: rgba(58, 123, 213, 0.1);
+  }
+  
+  .user-icon {
+    font-size: 1.2rem;
+    margin-right: 8px;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    min-width: 200px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    padding: 10px 0;
+    z-index: 1000;
+    animation: fadeInDown 0.3s ease;
+    transform-origin: top right;
+  }
+  
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  
+  .dropdown-item:hover {
+    background: rgba(58, 123, 213, 0.1);
+    color: #3a7bd5;
+  }
+  
+  .dropdown-icon {
+    margin-right: 10px;
+    font-size: 1rem;
+  }
+  
+  /* Cart Button */
+  .cart-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: #333;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 20px;
+  }
+  
+  .cart-btn:hover {
+    color: #3a7bd5;
+    background: rgba(58, 123, 213, 0.1);
+  }
+  
+  .cart-icon {
+    font-size: 1.2rem;
+  }
+  
+  .cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+  }
+  
+  /* Animations */
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 992px) {
+    .navbar-collapse {
+      background: white;
+      padding: 20px;
+      margin-top: 15px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-link {
+      margin: 10px 0;
+      padding: 10px 0;
+    }
+    
+    .nav-icons {
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .user-text {
+      display: none;
+    }
+    
+    .user-btn {
+      padding: 8px;
+    }
+    
+    .dropdown-menu {
+      right: auto;
+      left: 0;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .brand-name {
+      font-size: 1rem;
+    }
+    
+    .brand-logo {
+      height: 30px;
+    }
+  }
