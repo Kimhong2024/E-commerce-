@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { RiMenuFill, RiSearchLine, RiUserLine, RiSettingsLine, RiLogoutCircleLine, RiNotificationLine, RiMailLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { 
+  RiMenuFill, 
+  RiSearchLine, 
+  RiUserLine, 
+  RiSettingsLine, 
+  RiLogoutCircleLine, 
+  RiNotificationLine, 
+  RiMailLine 
+} from 'react-icons/ri';
 
 function Header({ onMenuToggle }) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -9,17 +19,31 @@ function Header({ onMenuToggle }) {
     { id: 2, text: 'Server down', time: '5 hours ago', read: true },
   ]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    // Using navigate instead of window.location for better SPA experience
+    navigate('/auth/login');
+    // Optional: refresh to clear all state
+    window.location.reload();
+  };
+
   const userMenuItems = [
     { icon: <RiUserLine />, label: 'Profile', action: () => handleMenuItemClick('profile') },
     { icon: <RiSettingsLine />, label: 'Settings', action: () => handleMenuItemClick('settings') },
-    { icon: <RiLogoutCircleLine />, label: 'Logout', action: () => handleMenuItemClick('logout') },
+    { icon: <RiLogoutCircleLine />, label: 'Logout', action: handleLogout }, // Updated this line
   ];
 
   const handleMenuItemClick = (action) => {
     setIsProfileDropdownOpen(false);
     console.log(`Action: ${action}`);
     // Add your action handlers here
+    if (action === 'profile') {
+      navigate('/profile');
+    } else if (action === 'settings') {
+      navigate('/settings');
+    }
   };
+
 
   const handleSearch = (e) => {
     e.preventDefault();

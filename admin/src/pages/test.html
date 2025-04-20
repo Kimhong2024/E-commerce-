@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Auth Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --error: #ef4444;
+      --success: #10b981;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --bg: #f9fafb;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background-image: radial-gradient(
+        circle at 10% 20%, 
+        rgba(199, 210, 254, 0.3) 0%, 
+        rgba(255, 255, 255, 0) 90%
+      );
+      animation: gradientBackground 15s ease infinite alternate;
+    }
+    
+    @keyframes gradientBackground {
+      0% { background-position: 10% 20%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 30% 80%; }
+    }
+    
+    .auth-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1), 
+        0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+      transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      overflow: hidden;
+      position: relative;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+    
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 0%,
+        rgba(99, 102, 241, 0.08) 50%,
+        transparent 100%
+      );
+      animation: rotate 15s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+      transition: all 0.4s ease;
+      transform-origin: top center;
+    }
+    
+    .auth-header h2 {
+      color: var(--text);
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 26px;
+      background: linear-gradient(90deg, var(--primary), #8b5cf6);
+      
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+      transition: all 0.4s ease;
+    }
+    
+    .auth-header p {
+      color: var(--text-light);
+      margin-bottom: 0;
+      font-size: 15px;
+      transition: all 0.4s ease;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+      transition: 
+        opacity 0.4s ease,
+        transform 0.4s ease,
+        margin 0.4s ease;
+      transform-origin: top center;
+    }
+    
+    .form-group.hidden {
+      opacity: 0;
+      height: 0;
+      margin-bottom: 0;
+      transform: scale(0.9) translateY(-10px);
+      pointer-events: none;
+    }
+    
+    .form-group.visible {
+      opacity: 1;
+      height: auto;
+      transform: scale(1) translateY(0);
+      animation: bounceIn 0.6s ease;
+    }
+    
+    @keyframes bounceIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+      50% {
+        opacity: 0.5;
+        transform: scale(1.02) translateY(-2px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 
+        0 1px 2px 0 rgba(0, 0, 0, 0.05),
+        inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 
+        0 0 0 3px rgba(99, 102, 241, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.05);
+      outline: none;
+      transform: translateY(-1px);
+    }
+    
+    .form-control:hover {
+      border-color: #c7d2fe;
+    }
+    
+    .is-invalid {
+      border-color: var(--error);
+      animation: shake 0.4s ease;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
+    .invalid-feedback {
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      transition: all 0.4s ease;
+    }
+    
+    .form-options.hidden {
+      opacity: 0;
+      height: 0;
+      margin-bottom: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+    }
+    
+    .form-options.visible {
+      opacity: 1;
+      height: auto;
+      transform: scale(1);
+    }
+    
+    .form-check {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .form-check-input {
+      margin-right: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .forgot-password {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .forgot-password::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background-color: var(--primary);
+      transition: width 0.3s ease;
+    }
+    
+    .forgot-password:hover::after {
+      width: 100%;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      border: none;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      color: white;
+      margin-top: 10px;
+      width: 100%;
+      box-shadow: 
+        0 4px 6px -1px rgba(99, 102, 241, 0.3),
+        0 2px 4px -1px rgba(99, 102, 241, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: all 0.6s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 10px 15px -3px rgba(99, 102, 241, 0.3),
+        0 4px 6px -2px rgba(99, 102, 241, 0.2);
+    }
+    
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px -1px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      background-color: #d1d5db;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .auth-footer {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 14px;
+      transition: all 0.4s ease;
+    }
+    
+    .auth-toggle {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .auth-toggle::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background-color: var(--primary);
+      transition: width 0.3s ease;
+    }
+    
+    .auth-toggle:hover::after {
+      width: 100%;
+    }
+    
+    /* Floating animation */
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    /* Ripple effect */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(0);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+    
+    @keyframes ripple {
+      to {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .auth-card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card floating" id="authCard">
+      <div class="auth-header">
+        <h2 id="authTitle">Welcome Back</h2>
+        <p id="authSubtitle">Sign in to continue</p>
+      </div>
+
+      <form id="authForm" class="auth-form" novalidate>
+        <div class="form-group hidden" id="nameField">
+          <label for="name">Full Name</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            class="form-control"
+            placeholder="Enter your full name"
+            aria-describedby="nameError"
+          />
+          <div id="nameError" class="invalid-feedback">Please enter your name</div>
+        </div>
+
+        <div class="form-group visible">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-control"
+            placeholder="Enter your email"
+            required
+            aria-describedby="emailError"
+          />
+          <div id="emailError" class="invalid-feedback">Please enter a valid email address</div>
+        </div>
+
+        <div class="form-group visible">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="Enter your password"
+            required
+            minlength="6"
+            aria-describedby="passwordError"
+          />
+          <div id="passwordError" class="invalid-feedback">Password must be at least 6 characters</div>
+        </div>
+
+        <div class="form-group hidden" id="confirmPasswordField">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            class="form-control"
+            placeholder="Confirm your password"
+            aria-describedby="confirmPasswordError"
+          />
+          <div id="confirmPasswordError" class="invalid-feedback">Passwords do not match</div>
+        </div>
+
+        <div class="form-options visible" id="loginOptions">
+          <div class="form-check">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              class="form-check-input"
+            />
+            <label for="rememberMe" class="form-check-label">Remember me</label>
+          </div>
+          <a href="/forgot-password" class="forgot-password">Forgot password?</a>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary ripple"
+          id="submitBtn"
+        >
+          Sign In
+        </button>
+
+        <div class="auth-footer">
+          <p id="authFooterText">
+            Don't have an account? 
+            <button
+              type="button"
+              class="auth-toggle"
+              id="authToggle"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const authCard = document.getElementById('authCard');
+      const authToggle = document.getElementById('authToggle');
+      const authForm = document.getElementById('authForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const authTitle = document.getElementById('authTitle');
+      const authSubtitle = document.getElementById('authSubtitle');
+      const authFooterText = document.getElementById('authFooterText');
+      const nameField = document.getElementById('nameField');
+      const confirmPasswordField = document.getElementById('confirmPasswordField');
+      const loginOptions = document.getElementById('loginOptions');
+      
+      let isLoginMode = true;
+      
+      // Toggle between login and register modes
+      authToggle.addEventListener('click', function(e) {
+        // Create ripple effect
+        createRippleEffect(e);
+        
+        isLoginMode = !isLoginMode;
+        
+        // Animate the card
+        authCard.style.transform = 'rotateY(10deg)';
+        setTimeout(() => {
+          authCard.style.transform = 'rotateY(0)';
+        }, 300);
+        
+        if (isLoginMode) {
+          // Switching to login mode
+          authTitle.textContent = 'Welcome Back';
+          authSubtitle.textContent = 'Sign in to continue';
+          submitBtn.textContent = 'Sign In';
+          authFooterText.innerHTML = 'Don\'t have an account? <button type="button" class="auth-toggle" id="authToggle">Sign up</button>';
+          
+          // Hide register fields with animation
+          nameField.classList.remove('visible');
+          nameField.classList.add('hidden');
+          confirmPasswordField.classList.remove('visible');
+          confirmPasswordField.classList.add('hidden');
+          
+          // Show login options
+          loginOptions.classList.remove('hidden');
+          loginOptions.classList.add('visible');
+        } else {
+          // Switching to register mode
+          authTitle.textContent = 'Create Account';
+          authSubtitle.textContent = 'Get started with your account';
+          submitBtn.textContent = 'Sign Up';
+          authFooterText.innerHTML = 'Already have an account? <button type="button" class="auth-toggle" id="authToggle">Sign in</button>';
+          
+          // Show register fields with animation
+          nameField.classList.remove('hidden');
+          nameField.classList.add('visible');
+          confirmPasswordField.classList.remove('hidden');
+          confirmPasswordField.classList.add('visible');
+          
+          // Hide login options
+          loginOptions.classList.remove('visible');
+          loginOptions.classList.add('hidden');
+        }
+        
+        // Clear any existing validation errors
+        clearValidationErrors();
+      });
+      
+      // Form validation
+      authForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearValidationErrors();
+        
+        let isValid = true;
+        
+        // Validate email
+        const email = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+          email.classList.add('is-invalid');
+          emailError.style.display = 'block';
+          isValid = false;
+        }
+        
+        // Validate password
+        const password = document.getElementById('password');
+        const passwordError = document.getElementById('passwordError');
+        if (!password.value || password.value.length < 6) {
+          password.classList.add('is-invalid');
+          passwordError.style.display = 'block';
+          isValid = false;
+        }
+        
+        // Validate register fields if in register mode
+        if (!isLoginMode) {
+          const name = document.getElementById('name');
+          const nameError = document.getElementById('nameError');
+          if (!name.value) {
+            name.classList.add('is-invalid');
+            nameError.style.display = 'block';
+            isValid = false;
+          }
+          
+          const confirmPassword = document.getElementById('confirmPassword');
+          const confirmPasswordError = document.getElementById('confirmPasswordError');
+          if (!confirmPassword.value || confirmPassword.value !== password.value) {
+            confirmPassword.classList.add('is-invalid');
+            confirmPasswordError.style.display = 'block';
+            isValid = false;
+          }
+        }
+        
+        if (isValid) {
+          // Create ripple effect on submit button
+          createRippleEffect({ target: submitBtn });
+          
+          // Simulate form submission
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+          
+          setTimeout(() => {
+            alert(isLoginMode ? 'Login successful!' : 'Registration successful!');
+            submitBtn.disabled = false;
+            submitBtn.textContent = isLoginMode ? 'Sign In' : 'Sign Up';
+          }, 1500);
+        }
+      });
+      
+      // Clear validation errors when user starts typing
+      document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('input', function() {
+          this.classList.remove('is-invalid');
+          const errorElement = document.getElementById(this.getAttribute('aria-describedby'));
+          if (errorElement) {
+            errorElement.style.display = 'none';
+          }
+        });
+      });
+      
+      function clearValidationErrors() {
+        document.querySelectorAll('.form-control').forEach(input => {
+          input.classList.remove('is-invalid');
+        });
+        document.querySelectorAll('.invalid-feedback').forEach(error => {
+          error.style.display = 'none';
+        });
+      }
+      
+      function createRippleEffect(event) {
+        const button = event.target;
+        const rect = button.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple-effect');
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        
+        button.appendChild(ripple);
+        
+        setTimeout(() => {
+          ripple.remove();
+        }, 600);
+      }
+    });
+  </script>
+</body>
+</html>
