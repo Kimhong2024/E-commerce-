@@ -18,10 +18,12 @@ const AdminAuth = () => {
         setErrors({});
     
         try {
-            const response = await axios.post('/admin/login', {
-                email,
-                password,
-            });
+            const endpoint = isLogin ? '/admin/login' : '/admin/register';
+            const data = isLogin 
+                ? { email, password }
+                : { name, email, password, password_confirmation: passwordConfirmation };
+
+            const response = await axios.post(endpoint, data);
     
             // Save the token in localStorage
             localStorage.setItem('adminToken', response.data.token);
@@ -38,7 +40,7 @@ const AdminAuth = () => {
             } else {
                 // General error
                 setErrors({
-                    general: error.response?.data?.message || 'Login failed',
+                    general: error.response?.data?.message || (isLogin ? 'Login failed' : 'Registration failed'),
                 });
             }
         } finally {
