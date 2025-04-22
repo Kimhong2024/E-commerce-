@@ -1,450 +1,501 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import { FiUser, FiMail, FiPhone, FiMapPin, FiLock, FiSearch, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import 'react-toastify/dist/ReactToastify.css';
 
-function Customer() {
-  const handleClick = (e) => {
-    e.preventDefault();
-    // Add your click handler logic here
+// Configure axios base URL
+axios.defaults.baseURL = 'http://localhost:8000/api';
+
+const Customer = () => {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    password_confirmation: ''
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/customers');
+      setCustomers(response.data.data || []);
+    } catch (error) {
+      toast.error('Failed to fetch customers');
+      console.error('Error fetching customers:', error);
+      setCustomers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Sample customer data
-  const customers = [
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      phone: '+1 (555) 123-4567',
-      orders: 12,
-      spent: '$1,245.00',
-      joinDate: '2022-03-15',
-      status: 'active',
-      avatar: 'https://example.com/avatars/1.jpg'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@example.com',
-      phone: '+1 (555) 987-6543',
-      orders: 8,
-      spent: '$876.50',
-      joinDate: '2022-05-22',
-      status: 'active',
-      avatar: 'https://example.com/avatars/2.jpg'
-    },
-    {
-      id: 3,
-      name: 'Michael Brown',
-      email: 'michael.b@example.com',
-      phone: '+1 (555) 456-7890',
-      orders: 5,
-      spent: '$542.75',
-      joinDate: '2022-07-10',
-      status: 'active',
-      avatar: 'https://example.com/avatars/3.jpg'
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      email: 'emily.d@example.com',
-      phone: '+1 (555) 321-6547',
-      orders: 3,
-      spent: '$267.30',
-      joinDate: '2022-09-05',
-      status: 'inactive',
-      avatar: 'https://example.com/avatars/4.jpg'
-    },
-    {
-      id: 5,
-      name: 'Robert Wilson',
-      email: 'robert.w@example.com',
-      phone: '+1 (555) 654-1238',
-      orders: 15,
-      spent: '$2,198.00',
-      joinDate: '2022-01-18',
-      status: 'active',
-      avatar: 'https://example.com/avatars/5.jpg'
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
     }
-  ];
+  };
 
-  // Sample customer groups
-  const groups = [
-    { name: 'VIP Customers', customers: 42, discount: '15%', status: 'active' },
-    { name: 'Wholesale Buyers', customers: 28, discount: '20%', status: 'active' },
-    { name: 'First-time Buyers', customers: 156, discount: '10%', status: 'active' },
-    { name: 'Inactive Customers', customers: 87, discount: '0%', status: 'inactive' }
-  ];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    setLoading(true);
 
-  // Sample reviews
-  const reviews = [
-    {
-      id: 1,
-      product: 'iPhone 13 Pro',
-      customer: 'John Smith',
-      rating: 5,
-      review: 'Excellent product! Fast delivery and great quality.',
-      date: '2023-06-15',
-      status: 'published'
-    },
-    {
-      id: 2,
-      product: 'MacBook Pro M1',
-      customer: 'Sarah Johnson',
-      rating: 4,
-      review: 'Very good laptop, but a bit expensive.',
-      date: '2023-06-10',
-      status: 'published'
-    },
-    {
-      id: 3,
-      product: 'AirPods Pro',
-      customer: 'Michael Brown',
-      rating: 3,
-      review: 'Sound quality is good but battery life could be better.',
-      date: '2023-05-28',
-      status: 'pending'
-    },
-    {
-      id: 4,
-      product: 'iPad Air',
-      customer: 'Emily Davis',
-      rating: 5,
-      review: 'Love this tablet! Perfect for my needs.',
-      date: '2023-05-15',
-      status: 'published'
+    try {
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate password match
+      if (formData.password !== formData.password_confirmation) {
+        toast.error('Passwords do not match');
+        return;
+      }
+
+      const formDataToSend = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone ? formData.phone.trim() : null,
+        address: formData.address ? formData.address.trim() : null,
+        password: formData.password,
+        password_confirmation: formData.password_confirmation
+      };
+
+      if (editingCustomer) {
+        // For update, only send password if it's changed
+        if (!formDataToSend.password) {
+          delete formDataToSend.password;
+          delete formDataToSend.password_confirmation;
+        }
+        await axios.put(`/customers/${editingCustomer.id}`, formDataToSend);
+        toast.success('Customer updated successfully');
+      } else {
+        await axios.post('/customers', formDataToSend);
+        toast.success('Customer added successfully');
+      }
+      
+      setShowModal(false);
+      setEditingCustomer(null);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        password: '',
+        password_confirmation: ''
+      });
+      fetchCustomers();
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+        Object.keys(error.response.data.errors).forEach(key => {
+          toast.error(error.response.data.errors[key][0]);
+        });
+      } else {
+        toast.error(error.response?.data?.message || 'Operation failed');
+      }
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Stats cards data
-  const stats = [
-    { title: 'Total Customers', value: '1,243', icon: 'ri-user-line', trend: 'up', change: '12%' },
-    { title: 'Active Customers', value: '1,087', icon: 'ri-user-heart-line', trend: 'up', change: '8%' },
-    { title: 'New Customers', value: '156', icon: 'ri-user-add-line', trend: 'down', change: '3%' },
-    { title: 'Avg. Orders per Customer', value: '3.2', icon: 'ri-shopping-cart-2-line', trend: 'up', change: '5%' }
-  ];
+  const handleEdit = (customer) => {
+    setEditingCustomer(customer);
+    setFormData({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || '',
+      address: customer.address || '',
+      password: '',
+      password_confirmation: ''
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await axios.delete(`/customers/${id}`);
+        toast.success('Customer deleted successfully');
+        fetchCustomers();
+      } catch (error) {
+        toast.error('Failed to delete customer');
+      }
+    }
+  };
 
   return (
     <div className="layout-wrapper layout-content-navbar">
       <div className="layout-container">
-        {/* Sidebar Menu - Same as Home.jsx */}
-
-        {/* Layout container */}
         <div className="layout-page">
-            {/* Navbar - Same as Product.jsx */}
-          {/* Content wrapper */}
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            style={{ bottom: '20px' }}
+          />
+          
           <div className="content-wrapper">
-            {/* Content */}
             <div className="container-xxl flex-grow-1 container-p-y">
               <div className="row mb-4">
                 <div className="col-12">
                   <div className="d-flex justify-content-between align-items-center">
-                    <h4 className="fw-bold mb-0">Customers</h4>
-                    <div>
-                      <button className="btn btn-primary">
-                        <i className="ri-add-line me-2"></i> Add Customer
-                      </button>
-                    </div>
+                    <h4 className="fw-bold mb-0">Customer Management</h4>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => setShowModal(true)}
+                    >
+                      <i className="ri-add-line me-2"></i> Add Customer
+                    </button>
                   </div>
                 </div>
               </div>
-
-              {/* Stats Cards */}
-              <div className="row mb-4">
-                {stats.map((stat, index) => (
-                  <div key={index} className="col-md-6 col-lg-3 mb-4">
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="d-flex justify-content-between">
-                          <div>
-                            <h6 className="mb-2 text-muted">{stat.title}</h6>
-                            <h3 className="mb-0">{stat.value}</h3>
-                          </div>
-                          <div className={`avatar avatar-sm p-2 bg-label-${stat.trend === 'up' ? 'success' : 'danger'}`}>
-                            <i className={`${stat.icon} fs-4 text-${stat.trend === 'up' ? 'success' : 'danger'}`} />
-                          </div>
-                        </div>
-                        <small className={`text-${stat.trend === 'up' ? 'success' : 'danger'}`}>
-                          <i className={`ri-arrow-${stat.trend}-line`} /> {stat.change} vs last month
-                        </small>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tabs */}
-              <div className="row mb-4">
+               {/* Tabs */}
+               <div className="row mb-4">
                 <div className="col-12">
                   <ul className="nav nav-tabs" role="tablist">
                     <li className="nav-item">
-                      <a className="nav-link active" data-bs-toggle="tab" href="#customer-list" role="tab">
-                        <i className="ri-list-check me-2"></i> Customer List
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#customer-groups" role="tab">
-                        <i className="ri-group-line me-2"></i> Customer Groups
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#reviews" role="tab">
-                        <i className="ri-star-smile-line me-2"></i> Reviews & Ratings
+                      <a className="nav-link active" data-bs-toggle="tab" href="#all-products" role="tab">
+                        <i className="ri-list-check me-2"></i> All Customers
                       </a>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              {/* Tab Content */}
-              <div className="tab-content">
-                {/* Customer List Tab */}
-                <div className="tab-pane fade show active" id="customer-list" role="tabpanel">
-                  <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                      <h5 className="mb-0">Customer List</h5>
-                      <div className="d-flex">
-                        <div className="me-3">
-                          <select className="form-select">
-                            <option>Filter by Status</option>
-                            <option>Active</option>
-                            <option>Inactive</option>
-                          </select>
-                        </div>
-                        <div className="me-3">
-                          <select className="form-select">
-                            <option>Sort by</option>
-                            <option>Most Orders</option>
-                            <option>Highest Spending</option>
-                            <option>Newest</option>
-                          </select>
-                        </div>
-                        <button className="btn btn-outline-secondary">
-                          <i className="ri-download-2-line"></i> Export
-                        </button>
-                      </div>
+              <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">Customer List</h5>
+                  <div className="d-flex gap-2">
+                    <div className="input-group input-group-sm" style={{ width: '300px' }}>
+                      <span className="input-group-text bg-transparent">
+                        <FiSearch className="text-muted" />
+                      </span>
+                      <input 
+                        type="text" 
+                        className="form-control border-start-0" 
+                        placeholder="Search customers..."
+                      />
                     </div>
-                    <div className="table-responsive">
-                      <table className="table table-hover">
-                        <thead>
-                          <tr>
-                            <th>Customer</th>
-                            <th>Contact</th>
-                            <th>Orders</th>
-                            <th>Total Spent</th>
-                            <th>Join Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {customers.map((customer) => (
-                            <tr key={customer.id}>
-                              <td>
-                                <div className="d-flex align-items-center">
-                                  <div className="avatar avatar-sm me-3">
-                                    <img src={customer.avatar} alt={customer.name} className="rounded-circle" />
-                                  </div>
-                                  <div>
-                                    <h6 className="mb-0">{customer.name}</h6>
-                                    <small className="text-muted">ID: {customer.id}</small>
+                  </div>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-4">
+                            <div className="d-flex justify-content-center">
+                              <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : customers.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-4">
+                            <div className="d-flex flex-column align-items-center">
+                              <i className="ri-user-line fs-1 text-muted mb-2"></i>
+                              <p className="text-muted mb-0">No customers found</p>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        customers.map((customer) => (
+                          <tr key={customer.id}>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <div className="avatar avatar-lg me-3">
+                                  <div className="avatar-initial bg-label-primary rounded-circle">
+                                    <span className="fs-4">{customer.name.charAt(0).toUpperCase()}</span>
                                   </div>
                                 </div>
-                              </td>
-                              <td>
                                 <div>
-                                  <div>{customer.email}</div>
-                                  <small className="text-muted">{customer.phone}</small>
+                                  <h6 className="mb-1 fw-semibold">{customer.name}</h6>
                                 </div>
-                              </td>
-                              <td>{customer.orders}</td>
-                              <td>{customer.spent}</td>
-                              <td>{customer.joinDate}</td>
-                              <td>
-                                <span className={`badge bg-${customer.status === 'active' ? 'success' : 'secondary'}`}>
-                                  {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="d-flex">
-                                  <button className="btn btn-sm btn-outline-primary me-2">
-                                    <i className="ri-eye-line"></i>
-                                  </button>
-                                  <button className="btn btn-sm btn-outline-secondary">
-                                    <i className="ri-mail-line"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="card-footer d-flex justify-content-between align-items-center">
-                      <div>
-                        Showing 1 to 5 of 25 entries
-                      </div>
-                      <nav aria-label="Page navigation">
-                        <ul className="pagination mb-0">
-                          <li className="page-item disabled">
-                            <a className="page-link" href="#" tabIndex="-1">Previous</a>
-                          </li>
-                          <li className="page-item active"><a className="page-link" href="#">1</a></li>
-                          <li className="page-item"><a className="page-link" href="#">2</a></li>
-                          <li className="page-item"><a className="page-link" href="#">3</a></li>
-                          <li className="page-item">
-                            <a className="page-link" href="#">Next</a>
-                          </li>
-                        </ul>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer Groups Tab */}
-                <div className="tab-pane fade" id="customer-groups" role="tabpanel">
-                  <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                      <h5 className="mb-0">Customer Groups</h5>
-                      <button className="btn btn-primary">
-                        <i className="ri-add-line me-2"></i> Create Group
-                      </button>
-                    </div>
-                    <div className="table-responsive">
-                      <table className="table table-hover">
-                        <thead>
-                          <tr>
-                            <th>Group Name</th>
-                            <th>Customers</th>
-                            <th>Discount</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="text-muted">{customer.email}</span>
+                            </td>
+                            <td>
+                              <span className="fw-semibold">{customer.phone || 'N/A'}</span>
+                            </td>
+                            <td>
+                              <span className="text-muted">{customer.address || 'N/A'}</span>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <button 
+                                  className="btn btn-sm btn-icon btn-outline-primary"
+                                  onClick={() => handleEdit(customer)}
+                                  title="Edit"
+                                >
+                                  <FiEdit2 />
+                                </button>
+                                <button 
+                                  className="btn btn-sm btn-icon btn-outline-danger"
+                                  onClick={() => handleDelete(customer.id)}
+                                  title="Delete"
+                                >
+                                  <FiTrash2 />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {groups.map((group, index) => (
-                            <tr key={index}>
-                              <td>{group.name}</td>
-                              <td>{group.customers} customers</td>
-                              <td>{group.discount}</td>
-                              <td>
-                                <span className={`badge bg-${group.status === 'active' ? 'success' : 'secondary'}`}>
-                                  {group.status.charAt(0).toUpperCase() + group.status.slice(1)}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="d-flex">
-                                  <button className="btn btn-sm btn-outline-primary me-2">
-                                    <i className="ri-edit-line"></i>
-                                  </button>
-                                  <button className="btn btn-sm btn-outline-secondary me-2">
-                                    <i className="ri-group-line"></i> View
-                                  </button>
-                                  <button className="btn btn-sm btn-outline-danger">
-                                    <i className="ri-delete-bin-line"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Reviews & Ratings Tab */}
-                <div className="tab-pane fade" id="reviews" role="tabpanel">
-                  <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                      <h5 className="mb-0">Product Reviews</h5>
-                      <div className="d-flex">
-                        <div className="me-3">
-                          <select className="form-select">
-                            <option>Filter by Status</option>
-                            <option>Published</option>
-                            <option>Pending</option>
-                          </select>
-                        </div>
-                        <div className="me-3">
-                          <select className="form-select">
-                            <option>Filter by Rating</option>
-                            <option>5 Stars</option>
-                            <option>4 Stars</option>
-                            <option>3 Stars</option>
-                            <option>2 Stars</option>
-                            <option>1 Star</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="table-responsive">
-                      <table className="table table-hover">
-                        <thead>
-                          <tr>
-                            <th>Product</th>
-                            <th>Customer</th>
-                            <th>Rating</th>
-                            <th>Review</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {reviews.map((review) => (
-                            <tr key={review.id}>
-                              <td>{review.product}</td>
-                              <td>{review.customer}</td>
-                              <td>
-                                <div className="d-flex align-items-center">
-                                  <div className="rating me-2">
-                                    {[...Array(5)].map((_, i) => (
-                                      <i 
-                                        key={i} 
-                                        className={`ri-star-${i < review.rating ? 'fill' : 'line'} text-warning`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span>{review.rating}.0</span>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="text-truncate" style={{ maxWidth: '200px' }}>
-                                  {review.review}
-                                </div>
-                              </td>
-                              <td>{review.date}</td>
-                              <td>
-                                <span className={`badge bg-${review.status === 'published' ? 'success' : 'warning'}`}>
-                                  {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="d-flex">
-                                  {review.status === 'pending' && (
-                                    <button className="btn btn-sm btn-outline-success me-2">
-                                      <i className="ri-check-line"></i> Approve
-                                    </button>
-                                  )}
-                                  <button className="btn btn-sm btn-outline-danger">
-                                    <i className="ri-delete-bin-line"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
 
-   
+            <footer className="content-footer footer bg-footer-theme">
+              <div className="container-xxl">
+                <div className="footer-container d-flex align-items-center justify-content-between py-3 flex-md-row flex-column">
+                  <div className="mb-2 mb-md-0">
+                    © {new Date().getFullYear()}, made with <span className="text-danger">❤️</span> by Your Company
+                  </div>
+                  <div>
+                    <a href="#" className="footer-link me-4">License</a>
+                    <a href="#" className="footer-link me-4">Help</a>
+                  </div>
+                </div>
+              </div>
+            </footer>
           </div>
         </div>
       </div>
+
+      {/* Add/Edit Customer Modal */}
+      {showModal && (
+        <div className="modal fade show" style={{ display: 'block' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title fw-semibold">
+                  {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingCustomer(null);
+                    setFormData({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      address: '',
+                      password: '',
+                      password_confirmation: ''
+                    });
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleSubmit} className="row g-3">
+                  {/* Name */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Name</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiUser className="text-muted" />
+                      </span>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="Enter customer name"
+                        required
+                      />
+                      {errors.name && (
+                        <div className="invalid-feedback">{errors.name[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Email</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiMail className="text-muted" />
+                      </span>
+                      <input
+                        type="email"
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Enter email address"
+                        required
+                      />
+                      {errors.email && (
+                        <div className="invalid-feedback">{errors.email[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Phone</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiPhone className="text-muted" />
+                      </span>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="Enter phone number"
+                      />
+                      {errors.phone && (
+                        <div className="invalid-feedback">{errors.phone[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Address</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiMapPin className="text-muted" />
+                      </span>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        placeholder="Enter address"
+                      />
+                      {errors.address && (
+                        <div className="invalid-feedback">{errors.address[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Password</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiLock className="text-muted" />
+                      </span>
+                      <input
+                        type="password"
+                        className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Enter password"
+                        required={!editingCustomer}
+                      />
+                      {errors.password && (
+                        <div className="invalid-feedback">{errors.password[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Password Confirmation */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Confirm Password</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <FiLock className="text-muted" />
+                      </span>
+                      <input
+                        type="password"
+                        className={`form-control ${errors.password_confirmation ? 'is-invalid' : ''}`}
+                        name="password_confirmation"
+                        value={formData.password_confirmation}
+                        onChange={handleChange}
+                        placeholder="Confirm password"
+                        required={!editingCustomer}
+                      />
+                      {errors.password_confirmation && (
+                        <div className="invalid-feedback">{errors.password_confirmation[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="col-12 mt-4">
+                    <div className="d-flex justify-content-end gap-2">
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary"
+                        onClick={() => {
+                          setShowModal(false);
+                          setEditingCustomer(null);
+                          setFormData({
+                            name: '',
+                            email: '',
+                            phone: '',
+                            address: '',
+                            password: '',
+                            password_confirmation: ''
+                          });
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn btn-primary">
+                        {editingCustomer ? 'Update Customer' : 'Add Customer'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default Customer;
