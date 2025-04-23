@@ -5,6 +5,9 @@ import './home.css'
 const Home = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,49 +17,31 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      setProducts(data);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   const categories = [
     { id: 'all', name: 'All Products' },
     { id: 'cleanser', name: 'Cleansers' },
     { id: 'serum', name: 'Serums' },
     { id: 'moisturizer', name: 'Moisturizers' },
     { id: 'sunscreen', name: 'Sunscreens' }
-  ];
-
-  const featuredProducts = [
-    {
-      id: 1,
-      name: 'Glow Renewal Serum',
-      price: 79.99,
-      category: 'serum',
-      rating: 4.5,
-      image: 'https://i.pinimg.com/736x/bc/c3/1e/bcc31ece0cc8f686203030bb31ac7e9d.jpg',
-      isNew: true
-    },
-    {
-      id: 2,
-      name: 'Hydra Boost Moisturizer',
-      price: 59.99,
-      category: 'moisturizer',
-      rating: 4.2,
-      image: 'https://i.pinimg.com/736x/26/1d/31/261d312769a88541cd44fe75a152f81b.jpg'
-    },
-    {
-      id: 3,
-      name: 'Gentle Foaming Cleanser',
-      price: 29.99,
-      category: 'cleanser',
-      rating: 4.7,
-      image: 'https://i.pinimg.com/736x/e2/d5/b3/e2d5b3e0c1c20a41069b363e4853d461.jpg',
-      isBestSeller: true
-    },
-    {
-      id: 4,
-      name: 'UV Defense Sunscreen',
-      price: 39.99,
-      category: 'sunscreen',
-      rating: 4.3,
-      image: 'https://i.pinimg.com/736x/1a/8d/1f/1a8d1f8a0b8b8b8b8b8b8b8b8b8b8b8b.jpg'
-    }
   ];
 
   const testimonials = [
@@ -79,6 +64,18 @@ const Home = () => {
       rating: 5
     }
   ];
+
+  const filteredProducts = activeCategory === 'all' 
+    ? products 
+    : products.filter(product => product.category.toLowerCase() === activeCategory);
+
+  if (loading) {
+    return <div className="loading">Loading products...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
 
   return (
     <div className="home-page">
@@ -117,6 +114,7 @@ const Home = () => {
         </div>
       </section>
 
+
       {/* Features Banner */}
       <section className={`features-banner ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container">
@@ -147,6 +145,8 @@ const Home = () => {
             <p>Find the perfect products for your skincare routine</p>
           </div>
           
+          
+          
           <div className="row">
             {categories.slice(1).map(category => (
               <div key={category.id} className="col-md-3 mb-4">
@@ -158,7 +158,10 @@ const Home = () => {
                     />
                   </div>
                   <h3>{category.name}</h3>
-                  <button className="btn btn-link">
+                  <button 
+                    className="btn btn-link"
+                    onClick={() => setActiveCategory(category.id)}
+                  >
                     Shop Now <FiArrowRight />
                   </button>
                 </div>
@@ -172,19 +175,22 @@ const Home = () => {
       <section className="featured-products">
         <div className="container">
           <div className="section-header">
-            <h2>Our Best Sellers</h2>
-            <p>Products loved by our community</p>
+            <h2>Our Products</h2>
+            <p>Discover our collection of premium skincare products</p>
           </div>
           <div className="row">
-            {featuredProducts.map(product => (
+            {filteredProducts.map(product => (
               <div key={product.id} className="col-md-3 mb-4">
                 <div className="product-card">
                   <div className="product-badges">
-                    {product.isNew && <span className="badge new">New</span>}
-                    {product.isBestSeller && <span className="badge bestseller">Bestseller</span>}
+                    {product.is_new && <span className="badge new">New</span>}
+                    {product.is_bestseller && <span className="badge bestseller">Bestseller</span>}
                   </div>
                   <div className="product-image">
-                    <img src={product.image} alt={product.name} />
+                    <img 
+                      src={product.image ? `http://localhost:8000/storage/${product.image}` : 'https://via.placeholder.com/300'} 
+                      alt={product.name} 
+                    />
                   </div>
                   <div className="product-info">
                     <h3>{product.name}</h3>
@@ -192,12 +198,12 @@ const Home = () => {
                       {[...Array(5)].map((_, i) => (
                         <FiStar 
                           key={i} 
-                          className={i < Math.floor(product.rating) ? 'filled' : ''} 
+                          className={i < Math.floor(product.rating || 0) ? 'filled' : ''} 
                         />
                       ))}
-                      <span>({product.rating})</span>
+                      <span>({product.rating || 0})</span>
                     </div>
-                    <div className="product-price">${product.price.toFixed(2)}</div>
+                    <div className="product-price">${parseFloat(product.price).toFixed(2)}</div>
                     <button className="btn btn-primary add-to-cart">
                       <FiShoppingCart /> Add to Cart
                     </button>
@@ -208,6 +214,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+
 
       {/* Testimonials */}
       <section className="testimonials-section">
@@ -233,8 +240,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      
     </div>
   );
 };
