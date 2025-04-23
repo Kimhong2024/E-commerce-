@@ -207,23 +207,9 @@ function Product() {
     }));
   };
 
-  // Sample categories
-  const categories = [
-    { name: 'Smartphones', products: 142, status: 'active' },
-    { name: 'Laptops', products: 98, status: 'active' },
-    { name: 'Audio', products: 87, status: 'active' },
-    { name: 'Tablets', products: 65, status: 'active' },
-    { name: 'Wearables', products: 42, status: 'active' }
-  ];
 
-  // Sample brands
-  const brands = [
-    { name: 'Apple', products: 342, status: 'active' },
-    { name: 'Samsung', products: 243, status: 'active' },
-    { name: 'Sony', products: 187, status: 'active' },
-    { name: 'Microsoft', products: 132, status: 'active' },
-    { name: 'Google', products: 98, status: 'active' }
-  ];
+
+  
 
   return (
     <div className="layout-wrapper layout-content-navbar">

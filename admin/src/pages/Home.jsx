@@ -1,33 +1,179 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { Line, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
+// Configure axios base URL
+axios.defaults.baseURL = 'http://localhost:8000/api';
 
 function Home() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [revenueChartData, setRevenueChartData] = useState(null);
+  const [salesDistributionData, setSalesDistributionData] = useState(null);
+  const [timeRange, setTimeRange] = useState('7days');
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all dashboard data in parallel
+      const [
+        statsResponse,
+        recentOrdersResponse,
+        topProductsResponse,
+        revenueChartResponse,
+        salesDistributionResponse
+      ] = await Promise.all([
+        axios.get('/dashboard/stats'),
+        axios.get('/dashboard/recent-orders'),
+        axios.get('/dashboard/top-products'),
+        axios.get('/dashboard/revenue-chart'),
+        axios.get('/dashboard/sales-distribution')
+      ]);
+      
+      // Process stats data
+      const statsData = [
+        { 
+          title: 'Total Revenue', 
+          value: `$${statsResponse.data.total_revenue.value}`, 
+          icon: 'ri-money-dollar-circle-line', 
+          trend: statsResponse.data.total_revenue.trend, 
+          change: `${statsResponse.data.total_revenue.change}%` 
+        },
+        { 
+          title: 'Total Orders', 
+          value: statsResponse.data.total_orders.value, 
+          icon: 'ri-shopping-cart-2-line', 
+          trend: statsResponse.data.total_orders.trend, 
+          change: `${statsResponse.data.total_orders.change}%` 
+        },
+        { 
+          title: 'New Customers', 
+          value: statsResponse.data.new_customers.value, 
+          icon: 'ri-user-add-line', 
+          trend: statsResponse.data.new_customers.trend, 
+          change: `${statsResponse.data.new_customers.change}%` 
+        },
+        { 
+          title: 'Total Product', 
+          value: statsResponse.data.total_products.value, 
+          icon: 'ri-product-hunt-line', 
+          trend: statsResponse.data.total_products.trend, 
+          change: `${statsResponse.data.total_products.change}%` 
+        }
+      ];
+      
+      setStats(statsData);
+      setRecentOrders(recentOrdersResponse.data);
+      setTopProducts(topProductsResponse.data);
+      
+      // Process revenue chart data
+      const revenueData = {
+        labels: revenueChartResponse.data.labels,
+        datasets: [
+          {
+            label: 'Revenue',
+            data: revenueChartResponse.data.data,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            tension: 0.3
+          }
+        ]
+      };
+      
+      setRevenueChartData(revenueData);
+      
+      // Process sales distribution data
+      const salesData = {
+        labels: salesDistributionResponse.data.map(item => item.category),
+        datasets: [
+          {
+            data: salesDistributionResponse.data.map(item => item.total_sales),
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(54, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(153, 102, 255, 0.5)',
+              'rgba(255, 159, 64, 0.5)'
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+          }
+        ]
+      };
+      
+      setSalesDistributionData(salesData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTimeRangeChange = (range) => {
+    setTimeRange(range);
+    // In a real app, you would fetch data for the selected time range
+    // For now, we'll just update the state
+  };
+
   const handleClick = (e) => {
     e.preventDefault();
     // Add your click handler logic here
   };
 
-  // Sample data
-  const stats = [
-    { title: 'Total Revenue', value: '$24,983', icon: 'ri-money-dollar-circle-line', trend: 'up', change: '12%' },
-    { title: 'Total Orders', value: '1,243', icon: 'ri-shopping-cart-2-line', trend: 'up', change: '8%' },
-    { title: 'New Customers', value: '342', icon: 'ri-user-add-line', trend: 'down', change: '3%' },
-    { title: 'Avg. Order Value', value: '$89.54', icon: 'ri-line-chart-line', trend: 'up', change: '5%' }
-  ];
-
-  const recentOrders = [
-    { id: '#2456', customer: 'John Smith', date: '2023-06-15', amount: '$125.00', status: 'completed' },
-    { id: '#2455', customer: 'Sarah Johnson', date: '2023-06-14', amount: '$89.50', status: 'processing' },
-    { id: '#2454', customer: 'Michael Brown', date: '2023-06-14', amount: '$245.75', status: 'completed' },
-    { id: '#2453', customer: 'Emily Davis', date: '2023-06-13', amount: '$67.30', status: 'pending' },
-    { id: '#2452', customer: 'Robert Wilson', date: '2023-06-12', amount: '$198.00', status: 'completed' }
-  ];
-
-  const topProducts = [
-    { name: 'iPhone 13 Pro', sales: 142, revenue: '$142,000', stock: 32 },
-    { name: 'MacBook Pro M1', sales: 98, revenue: '$127,400', stock: 15 },
-    { name: 'AirPods Pro', sales: 87, revenue: '$17,400', stock: 45 },
-    { name: 'iPad Air', sales: 65, revenue: '$32,500', stock: 22 }
-  ];
+  // Helper function for status colors
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'processing':
+        return 'info';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'secondary';
+    }
+  };
 
   return (
     <div className="layout-wrapper layout-content-navbar">
@@ -36,7 +182,7 @@ function Home() {
 
         {/* Layout container */}
         <div className="layout-page">
-
+          
           {/* Content wrapper */}
           <div className="content-wrapper">
             {/* Content */}
@@ -45,26 +191,48 @@ function Home() {
 
               {/* Stats Cards */}
               <div className="row mb-4">
-                {stats.map((stat, index) => (
-                  <div key={index} className="col-md-6 col-lg-3 mb-4">
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="d-flex justify-content-between">
-                          <div>
-                            <h6 className="mb-2 text-muted">{stat.title}</h6>
-                            <h3 className="mb-0">{stat.value}</h3>
-                          </div>
-                          <div className={`avatar avatar-sm p-2 bg-label-${stat.trend === 'up' ? 'success' : 'danger'}`}>
-                            <i className={`${stat.icon} fs-4 text-${stat.trend === 'up' ? 'success' : 'danger'}`} />
+                {loading ? (
+                  // Loading skeleton for stats
+                  Array(4).fill(0).map((_, index) => (
+                    <div key={index} className="col-md-6 col-lg-3 mb-4">
+                      <div className="card">
+                        <div className="card-body">
+                          <div className="d-flex justify-content-between">
+                            <div>
+                              <div className="skeleton-text mb-2" style={{ width: '100px', height: '16px', backgroundColor: '#e9ecef' }}></div>
+                              <div className="skeleton-text" style={{ width: '80px', height: '24px', backgroundColor: '#e9ecef' }}></div>
+                            </div>
+                            <div className="avatar avatar-sm p-2 bg-label-primary">
+                              <i className="ri-money-dollar-circle-line fs-4 text-primary"></i>
+                            </div>
                           </div>
                         </div>
-                        <small className={`text-${stat.trend === 'up' ? 'success' : 'danger'}`}>
-                          <i className={`ri-arrow-${stat.trend}-line`} /> {stat.change} vs last week
-                        </small>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  // Actual stats data
+                  stats.map((stat, index) => (
+                    <div key={index} className="col-md-6 col-lg-3 mb-4">
+                      <div className="card">
+                        <div className="card-body">
+                          <div className="d-flex justify-content-between">
+                            <div>
+                              <h6 className="mb-2 text-muted">{stat.title}</h6>
+                              <h3 className="mb-0">{stat.value}</h3>
+                            </div>
+                            <div className={`avatar avatar-sm p-2 bg-label-${stat.trend === 'up' ? 'success' : 'danger'}`}>
+                              <i className={`${stat.icon} fs-4 text-${stat.trend === 'up' ? 'success' : 'danger'}`} />
+                            </div>
+                          </div>
+                          <small className={`text-${stat.trend === 'up' ? 'success' : 'danger'}`}>
+                            <i className={`ri-arrow-${stat.trend}-line`} /> {stat.change} vs last week
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Charts Row */}
@@ -79,20 +247,49 @@ function Home() {
                           <i className="ri-more-2-line" />
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end">
-                          <li><a className="dropdown-item" href="#">Last 7 Days</a></li>
-                          <li><a className="dropdown-item" href="#">Last Month</a></li>
-                          <li><a className="dropdown-item" href="#">Last Year</a></li>
+                          <li><a className={`dropdown-item ${timeRange === '7days' ? 'active' : ''}`} href="#" onClick={() => handleTimeRangeChange('7days')}>Last 7 Days</a></li>
+                          <li><a className={`dropdown-item ${timeRange === '30days' ? 'active' : ''}`} href="#" onClick={() => handleTimeRangeChange('30days')}>Last 30 Days</a></li>
+                          <li><a className={`dropdown-item ${timeRange === '90days' ? 'active' : ''}`} href="#" onClick={() => handleTimeRangeChange('90days')}>Last 90 Days</a></li>
                         </ul>
                       </div>
                     </div>
                     <div className="card-body">
-                      <div className="chart-container" style={{ height: '300px' }}>
-                        {/* Replace with your actual chart component */}
-                        <div className="bg-light rounded text-center p-5">
-                          <p className="mb-0">Revenue Chart Placeholder</p>
-                          <small className="text-muted">(Chart would display here)</small>
+                      {loading ? (
+                        <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
                         </div>
-                      </div>
+                      ) : revenueChartData ? (
+                        <div style={{ height: '300px' }}>
+                          <Line 
+                            data={revenueChartData} 
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              plugins: {
+                                legend: {
+                                  display: false
+                                }
+                              },
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  ticks: {
+                                    callback: function(value) {
+                                      return '$' + value;
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-light rounded text-center p-5">
+                          <p className="mb-0">No revenue data available</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -104,13 +301,32 @@ function Home() {
                       <h5 className="mb-0">Sales Distribution</h5>
                     </div>
                     <div className="card-body">
-                      <div className="chart-container" style={{ height: '300px' }}>
-                        {/* Replace with your actual chart component */}
-                        <div className="bg-light rounded text-center p-5">
-                          <p className="mb-0">Sales Chart Placeholder</p>
-                          <small className="text-muted">(Chart would display here)</small>
+                      {loading ? (
+                        <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
                         </div>
-                      </div>
+                      ) : salesDistributionData ? (
+                        <div style={{ height: '300px' }}>
+                          <Doughnut 
+                            data={salesDistributionData} 
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              plugins: {
+                                legend: {
+                                  position: 'bottom'
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-light rounded text-center p-5">
+                          <p className="mb-0">No sales distribution data available</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -126,38 +342,50 @@ function Home() {
                       <a href="#" className="btn btn-sm btn-outline-primary" onClick={handleClick}>View All</a>
                     </div>
                     <div className="table-responsive">
-                      <table className="table table-hover">
-                        <thead>
-                          <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {recentOrders.map((order, index) => (
-                            <tr key={index}>
-                              <td>{order.id}</td>
-                              <td>{order.customer}</td>
-                              <td>{order.date}</td>
-                              <td>{order.amount}</td>
-                              <td>
-                                <span className={`badge bg-${getStatusColor(order.status)}`}>
-                                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                </span>
-                              </td>
-                              <td>
-                                <button className="btn btn-sm btn-outline-primary">
-                                  <i className="ri-eye-line" />
-                                </button>
-                              </td>
+                      {loading ? (
+                        <div className="d-flex justify-content-center align-items-center p-5">
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : recentOrders.length > 0 ? (
+                        <table className="table table-hover">
+                          <thead>
+                            <tr>
+                              <th>Order ID</th>
+                              <th>Customer</th>
+                              <th>Date</th>
+                              <th>Amount</th>
+                              <th>Status</th>
+                              <th>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {recentOrders.map((order, index) => (
+                              <tr key={index}>
+                                <td>{order.id}</td>
+                                <td>{order.customer}</td>
+                                <td>{order.date}</td>
+                                <td>${order.amount}</td>
+                                <td>
+                                  <span className={`badge bg-${getStatusColor(order.status)}`}>
+                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                  </span>
+                                </td>
+                                <td>
+                                  <button className="btn btn-sm btn-outline-primary">
+                                    <i className="ri-eye-line" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="text-center p-5">
+                          <p className="mb-0">No recent orders found</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -170,26 +398,38 @@ function Home() {
                       <a href="#" className="btn btn-sm btn-outline-primary" onClick={handleClick}>View All</a>
                     </div>
                     <div className="card-body">
-                      <ul className="list-unstyled mb-0">
-                        {topProducts.map((product, index) => (
-                          <li key={index} className="mb-3">
-                            <div className="d-flex align-items-center">
-                              <div className="avatar avatar-sm me-3">
-                                <span className="avatar-initial rounded bg-label-primary">
-                                  {product.name.charAt(0)}
+                      {loading ? (
+                        <div className="d-flex justify-content-center align-items-center p-5">
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : topProducts.length > 0 ? (
+                        <ul className="list-unstyled mb-0">
+                          {topProducts.map((product, index) => (
+                            <li key={index} className="mb-3">
+                              <div className="d-flex align-items-center">
+                                <div className="avatar avatar-sm me-3">
+                                  <span className="avatar-initial rounded bg-label-primary">
+                                    {product.name.charAt(0)}
+                                  </span>
+                                </div>
+                                <div className="flex-grow-1">
+                                  <h6 className="mb-0">{product.name}</h6>
+                                  <small className="text-muted">{product.sales} sales | ${product.revenue}</small>
+                                </div>
+                                <span className={`badge bg-label-${product.stock > 20 ? 'success' : 'warning'}`}>
+                                  {product.stock} in stock
                                 </span>
                               </div>
-                              <div className="flex-grow-1">
-                                <h6 className="mb-0">{product.name}</h6>
-                                <small className="text-muted">{product.sales} sales | ${product.revenue}</small>
-                              </div>
-                              <span className={`badge bg-label-${product.stock > 20 ? 'success' : 'warning'}`}>
-                                {product.stock} in stock
-                              </span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-center p-5">
+                          <p className="mb-0">No top products found</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -215,20 +455,6 @@ function Home() {
       </div>
     </div>
   );
-}
-
-// Helper function for status colors
-function getStatusColor(status) {
-  switch (status) {
-    case 'completed':
-      return 'success';
-    case 'processing':
-      return 'info';
-    case 'pending':
-      return 'warning';
-    default:
-      return 'secondary';
-  }
 }
 
 export default Home;
