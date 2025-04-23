@@ -6,6 +6,7 @@ const Home = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isScrolled, setIsScrolled] = useState(false);
   const [products, setProducts] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,6 +20,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchTopProducts();
   }, []);
 
   const fetchProducts = async () => {
@@ -33,6 +35,19 @@ const Home = () => {
     } catch (err) {
       setError(err.message);
       setLoading(false);
+    }
+  };
+
+  const fetchTopProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/dashboard/top-products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch top products');
+      }
+      const data = await response.json();
+      setTopProducts(data);
+    } catch (err) {
+      console.error('Error fetching top products:', err);
     }
   };
 
@@ -175,16 +190,15 @@ const Home = () => {
       <section className="featured-products">
         <div className="container">
           <div className="section-header">
-            <h2>Our Products</h2>
-            <p>Discover our collection of premium skincare products</p>
+            <h2>Top Products</h2>
+            <p>Our most popular products based on customer orders</p>
           </div>
           <div className="row">
-            {filteredProducts.map(product => (
+            {topProducts.map(product => (
               <div key={product.id} className="col-md-3 mb-4">
                 <div className="product-card">
                   <div className="product-badges">
-                    {product.is_new && <span className="badge new">New</span>}
-                    {product.is_bestseller && <span className="badge bestseller">Bestseller</span>}
+                    <span className="badge bestseller">Bestseller</span>
                   </div>
                   <div className="product-image">
                     <img 
@@ -194,16 +208,7 @@ const Home = () => {
                   </div>
                   <div className="product-info">
                     <h3>{product.name}</h3>
-                    <div className="product-rating">
-                      {[...Array(5)].map((_, i) => (
-                        <FiStar 
-                          key={i} 
-                          className={i < Math.floor(product.rating || 0) ? 'filled' : ''} 
-                        />
-                      ))}
-                      <span>({product.rating || 0})</span>
-                    </div>
-                    <div className="product-price">${parseFloat(product.price).toFixed(2)}</div>
+                    <div className="product-price">${product.price}</div>
                     <button className="btn btn-primary add-to-cart">
                       <FiShoppingCart /> Add to Cart
                     </button>

@@ -120,16 +120,19 @@ class DashboardController extends Controller
     {
         $topProducts = DB::table('order_items')
             ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->select('products.id', 'products.name', 'products.stock', 
+            ->select('products.id', 'products.name', 'products.stock', 'products.price', 'products.image',
                     DB::raw('SUM(order_items.quantity) as total_sales'),
                     DB::raw('SUM(order_items.quantity * order_items.unit_price) as total_revenue'))
-            ->groupBy('products.id', 'products.name', 'products.stock')
+            ->groupBy('products.id', 'products.name', 'products.stock', 'products.price', 'products.image')
             ->orderBy('total_sales', 'desc')
             ->take(4)
             ->get()
             ->map(function ($product) {
                 return [
+                    'id' => $product->id,
                     'name' => $product->name,
+                    'price' => $product->price,
+                    'image' => $product->image,
                     'sales' => $product->total_sales,
                     'revenue' => number_format($product->total_revenue, 2),
                     'stock' => $product->stock
