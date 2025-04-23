@@ -10,40 +10,44 @@ use App\Models\User;
 class AdminAuthController extends Controller
 {
     public function register(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users|max:255',
-        'password' => 'required|min:8|confirmed',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users|max:255',
+            'password' => 'required|min:8|confirmed',
+        ]);
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-    ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
 
-    $token = $user->createToken('adminToken')->plainTextToken;
+        $token = $user->createToken('adminToken')->plainTextToken;
 
-    return response()->json(['user' => $user, 'token' => $token], 201);
-}
-
-public function login(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
-
-    if (!Auth::attempt($request->only('email', 'password'))) {
-        return response()->json(['message' => 'Invalid login credentials'], 401);
+        return response()->json(['user' => $user, 'token' => $token], 201);
     }
 
-    $user = User::where('email', $request->email)->first();
-    $token = $user->createToken('adminToken')->plainTextToken;
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-    return response()->json(['user' => $user, 'token' => $token]);
-}
+        // Find the user by email
+        $user = User::where('email', $request->email)->first();
+        
+        // Check if user exists and password is correct
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid login credentials'], 401);
+        }
+        
+        // Create token
+        $token = $user->createToken('adminToken')->plainTextToken;
+
+        return response()->json(['user' => $user, 'token' => $token]);
+    }
 
     public function logout(Request $request)
     {
