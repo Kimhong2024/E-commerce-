@@ -25,7 +25,7 @@ const Header = () => {
         <a className="navbar-brand" href="/">
           <div className="brand-container">
            
-            <span className="brand-name">PHONE STORE</span>
+            <span className="brand-name">SKIN CARE</span>
           </div>
         </a>
 
