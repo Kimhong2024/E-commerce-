@@ -12,6 +12,7 @@ import Report from './pages/Report';
 import Invoice from './pages/Invoice';
 import Setting from './pages/Setting';
 import Optional from './pages/Optional';
+import Profile from './pages/Profile';
 import AdminLogin from './auth/Login';
 import ProtectedRoute from './auth/ProtectedRoute';
 
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/invoices" element={<Invoice />} />
                 <Route path="/settings" element={<Setting />} />
                 <Route path="/optional" element={<Optional />} />
+                <Route path="/profile" element={<Profile />} />
                 {/* Add more routes as needed */}
               </Routes>
               <Footer />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   RiMenuFill, 
@@ -9,34 +9,55 @@ import {
   RiNotificationLine, 
   RiMailLine 
 } from 'react-icons/ri';
+import axios from '../utils/axios';
 
 function Header({ onMenuToggle }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'New order received', time: '2 hours ago', read: false },
     { id: 2, text: 'Server down', time: '5 hours ago', read: true },
   ]);
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          navigate('/auth/login');
+          return;
+        }
+
+        const response = await axios.get('/admin/user');
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem('adminToken');
+          navigate('/auth/login');
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
-    // Using navigate instead of window.location for better SPA experience
     navigate('/auth/login');
-    // Optional: refresh to clear all state
     window.location.reload();
   };
 
   const userMenuItems = [
     { icon: <RiUserLine />, label: 'Profile', action: () => handleMenuItemClick('profile') },
     { icon: <RiSettingsLine />, label: 'Settings', action: () => handleMenuItemClick('settings') },
-    { icon: <RiLogoutCircleLine />, label: 'Logout', action: handleLogout }, // Updated this line
+    { icon: <RiLogoutCircleLine />, label: 'Logout', action: handleLogout },
   ];
 
   const handleMenuItemClick = (action) => {
     setIsProfileDropdownOpen(false);
-    console.log(`Action: ${action}`);
-    // Add your action handlers here
     if (action === 'profile') {
       navigate('/profile');
     } else if (action === 'settings') {
@@ -44,11 +65,9 @@ function Header({ onMenuToggle }) {
     }
   };
 
-
   const handleSearch = (e) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
-    // Add search functionality here
   };
 
   const toggleProfileDropdown = () => {
@@ -60,6 +79,10 @@ function Header({ onMenuToggle }) {
       n.id === id ? { ...n, read: true } : n
     ));
   };
+
+  if (!user) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="layout-page">
@@ -150,14 +173,14 @@ function Header({ onMenuToggle }) {
             >
               <div className="avatar avatar-sm me-2">
                 <img 
-                  src="https://randomuser.me/api/portraits/men/1.jpg" 
-                  alt="User" 
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                  alt={user.name}
                   className="rounded-circle" 
                   width="32"
                   height="32"
                 />
               </div>
-              <span className="d-none d-md-inline">John Doe</span>
+              <span className="d-none d-md-inline">{user.name}</span>
             </button>
             
             {isProfileDropdownOpen && (
@@ -166,16 +189,16 @@ function Header({ onMenuToggle }) {
                   <div className="d-flex align-items-center">
                     <div className="avatar me-3">
                       <img 
-                        src="https://randomuser.me/api/portraits/men/1.jpg" 
-                        alt="User" 
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                        alt={user.name}
                         className="rounded-circle"
                         width="40"
                         height="40"
                       />
                     </div>
                     <div>
-                      <h6 className="mb-0">John Doe</h6>
-                      <small className="text-muted">Admin</small>
+                      <h6 className="mb-0">{user.name}</h6>
+                      <small className="text-muted">{user.email}</small>
                     </div>
                   </div>
                 </div>

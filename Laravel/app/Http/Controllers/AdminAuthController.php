@@ -60,4 +60,27 @@ class AdminAuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'current_password' => 'required_with:password',
+            'password' => 'sometimes|string|min:8|confirmed',
+        ]);
+
+        if (isset($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
 }

@@ -1,70 +1,112 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from '../utils/axios';
 
 function Setting() {
- 
-  // Sample payment methods
-  const paymentMethods = [
-    { id: 1, name: 'Credit Card', status: true, description: 'Visa, Mastercard, American Express' },
-    { id: 2, name: 'PayPal', status: true, description: 'Pay with PayPal account' },
-    { id: 3, name: 'Bank Transfer', status: false, description: 'Direct bank transfer' },
-    { id: 4, name: 'Cash on Delivery', status: true, description: 'Pay when you receive the product' }
-  ];
+  const [activeTab, setActiveTab] = useState('general-settings');
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    general: {
+      storeName: '',
+      storeEmail: '',
+      storePhone: '',
+      storeAddress: '',
+      timezone: '',
+      currency: '',
+      maintenanceMode: false
+    },
+    paymentMethods: [],
+    shippingOptions: [],
+    emailTemplates: [],
+    adminUsers: []
+  });
+  const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Sample shipping options
-  const shippingOptions = [
-    { id: 1, name: 'Standard Shipping', cost: '$5.99', deliveryTime: '3-5 business days', status: true },
-    { id: 2, name: 'Express Shipping', cost: '$12.99', deliveryTime: '1-2 business days', status: true },
-    { id: 3, name: 'Free Shipping', cost: 'Free', deliveryTime: '5-7 business days', status: true, minOrder: '$50.00' },
-    { id: 4, name: 'Local Pickup', cost: 'Free', deliveryTime: 'Same day', status: false }
-  ];
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get('/admin/settings');
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Sample email templates
-  const emailTemplates = [
-    { id: 1, name: 'Order Confirmation', subject: 'Your Order #{order_id} has been received', status: true },
-    { id: 2, name: 'Shipping Notification', subject: 'Your Order #{order_id} has been shipped', status: true },
-    { id: 3, name: 'Payment Received', subject: 'Payment received for Order #{order_id}', status: false },
-    { id: 4, name: 'Password Reset', subject: 'Password reset instructions', status: true }
-  ];
+    fetchSettings();
+  }, []);
 
-  // Sample admin users
-  const adminUsers = [
-    { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'Super Admin', lastLogin: '2023-06-15 14:30' },
-    { id: 2, name: 'Manager', email: 'manager@example.com', role: 'Content Manager', lastLogin: '2023-06-14 10:15' },
-    { id: 3, name: 'Sales', email: 'sales@example.com', role: 'Sales Manager', lastLogin: '2023-06-12 09:45' },
-    { id: 4, name: 'Support', email: 'support@example.com', role: 'Customer Support', lastLogin: '2023-06-10 16:20' }
-  ];
+  const handleGeneralSettingsChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSettings(prev => ({
+      ...prev,
+      general: {
+        ...prev.general,
+        [name]: type === 'checkbox' ? checked : value
+      }
+    }));
+  };
 
-  // Sample roles
-  const roles = [
-    { id: 1, name: 'Super Admin', permissions: 'Full access', users: 1 },
-    { id: 2, name: 'Content Manager', permissions: 'Products, Categories, Blog', users: 2 },
-    { id: 3, name: 'Sales Manager', permissions: 'Orders, Customers, Reports', users: 3 },
-    { id: 4, name: 'Customer Support', permissions: 'Orders, Customers, Tickets', users: 5 }
-  ];
+  const handlePaymentMethodChange = (id, field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.map(method => 
+        method.id === id ? { ...method, [field]: value } : method
+      )
+    }));
+  };
 
-  // General settings
-  const generalSettings = [
-    { name: 'Store Name', value: 'My Awesome Store', type: 'text' },
-    { name: 'Store Email', value: 'contact@example.com', type: 'email' },
-    { name: 'Store Phone', value: '+1 (555) 123-4567', type: 'tel' },
-    { name: 'Store Address', value: '123 Main St, City, Country', type: 'textarea' },
-    { name: 'Store Logo', value: 'logo.png', type: 'file' },
-    { name: 'Timezone', value: 'UTC-05:00 (Eastern Time)', type: 'select' },
-    { name: 'Currency', value: 'USD - US Dollar', type: 'select' },
-    { name: 'Maintenance Mode', value: false, type: 'checkbox' }
-  ];
+  const handleShippingOptionChange = (id, field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      shippingOptions: prev.shippingOptions.map(option => 
+        option.id === id ? { ...option, [field]: value } : option
+      )
+    }));
+  };
+
+  const handleEmailTemplateChange = (id, field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      emailTemplates: prev.emailTemplates.map(template => 
+        template.id === id ? { ...template, [field]: value } : template
+      )
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    setSuccessMessage('');
+
+    try {
+      await axios.put('/admin/settings', settings);
+      setSuccessMessage('Settings updated successfully!');
+    } catch (error) {
+      if (error.response?.status === 422) {
+        setErrors(error.response.data.errors);
+      } else {
+        setErrors({ general: 'An error occurred while updating settings' });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="layout-wrapper layout-content-navbar">
       <div className="layout-container">
-        {/* Sidebar Menu - Same as Home.jsx */}
-
-        {/* Layout container */}
         <div className="layout-page">
-       
-          {/* Content wrapper */}
           <div className="content-wrapper">
-            {/* Content */}
             <div className="container-xxl flex-grow-1 container-p-y">
               <div className="row mb-4">
                 <div className="col-12">
@@ -72,109 +114,157 @@ function Setting() {
                 </div>
               </div>
 
+              {successMessage && (
+                <div className="alert alert-success" role="alert">
+                  {successMessage}
+                </div>
+              )}
+              {errors.general && (
+                <div className="alert alert-danger" role="alert">
+                  {errors.general}
+                </div>
+              )}
+
               {/* Tabs */}
               <div className="row mb-4">
                 <div className="col-12">
                   <ul className="nav nav-tabs" role="tablist">
                     <li className="nav-item">
-                      <a className="nav-link active" data-bs-toggle="tab" href="#general-settings" role="tab">
+                      <button
+                        className={`nav-link ${activeTab === 'general-settings' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('general-settings')}
+                      >
                         <i className="ri-settings-3-line me-2"></i> General Settings
-                      </a>
+                      </button>
                     </li>
                     <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#payment-methods" role="tab">
+                      <button
+                        className={`nav-link ${activeTab === 'payment-methods' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('payment-methods')}
+                      >
                         <i className="ri-bank-card-line me-2"></i> Payment Methods
-                      </a>
+                      </button>
                     </li>
                     <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#shipping-options" role="tab">
+                      <button
+                        className={`nav-link ${activeTab === 'shipping-options' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('shipping-options')}
+                      >
                         <i className="ri-truck-line me-2"></i> Shipping Options
-                      </a>
+                      </button>
                     </li>
                     <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#email-templates" role="tab">
+                      <button
+                        className={`nav-link ${activeTab === 'email-templates' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('email-templates')}
+                      >
                         <i className="ri-mail-line me-2"></i> Email Templates
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" data-bs-toggle="tab" href="#admin-users" role="tab">
-                        <i className="ri-user-settings-line me-2"></i> Admin Users / Roles
-                      </a>
+                      </button>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              {/* Tab Content */}
-              <div className="tab-content">
+              <form onSubmit={handleSubmit}>
                 {/* General Settings Tab */}
-                <div className="tab-pane fade show active" id="general-settings" role="tabpanel">
+                {activeTab === 'general-settings' && (
                   <div className="card">
                     <div className="card-header">
                       <h5 className="mb-0">General Settings</h5>
                     </div>
                     <div className="card-body">
-                      <form>
-                        {generalSettings.map((setting, index) => (
-                          <div key={index} className="mb-4">
-                            <label className="form-label">{setting.name}</label>
-                            {setting.type === 'textarea' ? (
-                              <textarea 
-                                className="form-control" 
-                                rows="3"
-                                defaultValue={setting.value}
-                              />
-                            ) : setting.type === 'file' ? (
-                              <div className="d-flex align-items-center">
-                                <input 
-                                  type="file" 
-                                  className="form-control" 
-                                />
-                                <span className="ms-3">{setting.value}</span>
-                              </div>
-                            ) : setting.type === 'select' ? (
-                              <select className="form-select">
-                                <option>{setting.value}</option>
-                                <option>Option 1</option>
-                                <option>Option 2</option>
-                              </select>
-                            ) : setting.type === 'checkbox' ? (
-                              <div className="form-check form-switch">
-                                <input 
-                                  className="form-check-input" 
-                                  type="checkbox" 
-                                  id={`setting-${index}`}
-                                  defaultChecked={setting.value}
-                                />
-                                <label className="form-check-label" htmlFor={`setting-${index}`}>
-                                  {setting.value ? 'Enabled' : 'Disabled'}
-                                </label>
-                              </div>
-                            ) : (
-                              <input 
-                                type={setting.type} 
-                                className="form-control" 
-                                defaultValue={setting.value}
-                              />
-                            )}
-                          </div>
-                        ))}
-                        <div className="mt-4">
-                          <button type="submit" className="btn btn-primary">
-                            <i className="ri-save-line me-2"></i> Save Settings
-                          </button>
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Store Name</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="storeName"
+                            value={settings.general.storeName}
+                            onChange={handleGeneralSettingsChange}
+                          />
                         </div>
-                      </form>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Store Email</label>
+                          <input
+                            type="email"
+                            className="form-control"
+                            name="storeEmail"
+                            value={settings.general.storeEmail}
+                            onChange={handleGeneralSettingsChange}
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Store Phone</label>
+                          <input
+                            type="tel"
+                            className="form-control"
+                            name="storePhone"
+                            value={settings.general.storePhone}
+                            onChange={handleGeneralSettingsChange}
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Store Address</label>
+                          <textarea
+                            className="form-control"
+                            name="storeAddress"
+                            value={settings.general.storeAddress}
+                            onChange={handleGeneralSettingsChange}
+                            rows="3"
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Timezone</label>
+                          <select
+                            className="form-select"
+                            name="timezone"
+                            value={settings.general.timezone}
+                            onChange={handleGeneralSettingsChange}
+                          >
+                            <option value="UTC">UTC</option>
+                            <option value="UTC+1">UTC+1</option>
+                            <option value="UTC+2">UTC+2</option>
+                            {/* Add more timezones as needed */}
+                          </select>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Currency</label>
+                          <select
+                            className="form-select"
+                            name="currency"
+                            value={settings.general.currency}
+                            onChange={handleGeneralSettingsChange}
+                          >
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            {/* Add more currencies as needed */}
+                          </select>
+                        </div>
+                        <div className="col-12 mb-3">
+                          <div className="form-check form-switch">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              name="maintenanceMode"
+                              checked={settings.general.maintenanceMode}
+                              onChange={handleGeneralSettingsChange}
+                            />
+                            <label className="form-check-label">Maintenance Mode</label>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Payment Methods Tab */}
-                <div className="tab-pane fade" id="payment-methods" role="tabpanel">
+                {activeTab === 'payment-methods' && (
                   <div className="card">
                     <div className="card-header d-flex justify-content-between align-items-center">
                       <h5 className="mb-0">Payment Methods</h5>
-                      <button className="btn btn-primary">
+                      <button type="button" className="btn btn-primary">
                         <i className="ri-add-line me-2"></i> Add Method
                       </button>
                     </div>
@@ -189,29 +279,29 @@ function Setting() {
                           </tr>
                         </thead>
                         <tbody>
-                          {paymentMethods.map((method) => (
+                          {settings.paymentMethods.map((method) => (
                             <tr key={method.id}>
                               <td>{method.name}</td>
                               <td>{method.description}</td>
                               <td>
                                 <div className="form-check form-switch">
-                                  <input 
-                                    className="form-check-input" 
-                                    type="checkbox" 
-                                    id={`payment-${method.id}`}
-                                    defaultChecked={method.status}
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={method.status}
+                                    onChange={(e) => handlePaymentMethodChange(method.id, 'status', e.target.checked)}
                                   />
-                                  <label className="form-check-label" htmlFor={`payment-${method.id}`}>
+                                  <label className="form-check-label">
                                     {method.status ? 'Enabled' : 'Disabled'}
                                   </label>
                                 </div>
                               </td>
                               <td>
                                 <div className="d-flex">
-                                  <button className="btn btn-sm btn-outline-primary me-2">
+                                  <button type="button" className="btn btn-sm btn-outline-primary me-2">
                                     <i className="ri-edit-line"></i>
                                   </button>
-                                  <button className="btn btn-sm btn-outline-danger">
+                                  <button type="button" className="btn btn-sm btn-outline-danger">
                                     <i className="ri-delete-bin-line"></i>
                                   </button>
                                 </div>
@@ -222,14 +312,14 @@ function Setting() {
                       </table>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Shipping Options Tab */}
-                <div className="tab-pane fade" id="shipping-options" role="tabpanel">
+                {activeTab === 'shipping-options' && (
                   <div className="card">
                     <div className="card-header d-flex justify-content-between align-items-center">
                       <h5 className="mb-0">Shipping Options</h5>
-                      <button className="btn btn-primary">
+                      <button type="button" className="btn btn-primary">
                         <i className="ri-add-line me-2"></i> Add Option
                       </button>
                     </div>
@@ -246,7 +336,7 @@ function Setting() {
                           </tr>
                         </thead>
                         <tbody>
-                          {shippingOptions.map((option) => (
+                          {settings.shippingOptions.map((option) => (
                             <tr key={option.id}>
                               <td>{option.name}</td>
                               <td>{option.cost}</td>
@@ -254,23 +344,23 @@ function Setting() {
                               <td>{option.minOrder || '-'}</td>
                               <td>
                                 <div className="form-check form-switch">
-                                  <input 
-                                    className="form-check-input" 
-                                    type="checkbox" 
-                                    id={`shipping-${option.id}`}
-                                    defaultChecked={option.status}
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={option.status}
+                                    onChange={(e) => handleShippingOptionChange(option.id, 'status', e.target.checked)}
                                   />
-                                  <label className="form-check-label" htmlFor={`shipping-${option.id}`}>
+                                  <label className="form-check-label">
                                     {option.status ? 'Enabled' : 'Disabled'}
                                   </label>
                                 </div>
                               </td>
                               <td>
                                 <div className="d-flex">
-                                  <button className="btn btn-sm btn-outline-primary me-2">
+                                  <button type="button" className="btn btn-sm btn-outline-primary me-2">
                                     <i className="ri-edit-line"></i>
                                   </button>
-                                  <button className="btn btn-sm btn-outline-danger">
+                                  <button type="button" className="btn btn-sm btn-outline-danger">
                                     <i className="ri-delete-bin-line"></i>
                                   </button>
                                 </div>
@@ -281,14 +371,14 @@ function Setting() {
                       </table>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Email Templates Tab */}
-                <div className="tab-pane fade" id="email-templates" role="tabpanel">
+                {activeTab === 'email-templates' && (
                   <div className="card">
                     <div className="card-header d-flex justify-content-between align-items-center">
                       <h5 className="mb-0">Email Templates</h5>
-                      <button className="btn btn-primary">
+                      <button type="button" className="btn btn-primary">
                         <i className="ri-add-line me-2"></i> Add Template
                       </button>
                     </div>
@@ -303,30 +393,30 @@ function Setting() {
                           </tr>
                         </thead>
                         <tbody>
-                          {emailTemplates.map((template) => (
+                          {settings.emailTemplates.map((template) => (
                             <tr key={template.id}>
                               <td>{template.name}</td>
                               <td>{template.subject}</td>
                               <td>
                                 <div className="form-check form-switch">
-                                  <input 
-                                    className="form-check-input" 
-                                    type="checkbox" 
-                                    id={`email-${template.id}`}
-                                    defaultChecked={template.status}
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={template.status}
+                                    onChange={(e) => handleEmailTemplateChange(template.id, 'status', e.target.checked)}
                                   />
-                                  <label className="form-check-label" htmlFor={`email-${template.id}`}>
-                                    {template.status ? 'Active' : 'Inactive'}
+                                  <label className="form-check-label">
+                                    {template.status ? 'Enabled' : 'Disabled'}
                                   </label>
                                 </div>
                               </td>
                               <td>
                                 <div className="d-flex">
-                                  <button className="btn btn-sm btn-outline-primary me-2">
-                                    <i className="ri-edit-line"></i> Edit
+                                  <button type="button" className="btn btn-sm btn-outline-primary me-2">
+                                    <i className="ri-edit-line"></i>
                                   </button>
-                                  <button className="btn btn-sm btn-outline-secondary">
-                                    <i className="ri-eye-line"></i> Preview
+                                  <button type="button" className="btn btn-sm btn-outline-danger">
+                                    <i className="ri-delete-bin-line"></i>
                                   </button>
                                 </div>
                               </td>
@@ -336,105 +426,15 @@ function Setting() {
                       </table>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Admin Users / Roles Tab */}
-                <div className="tab-pane fade" id="admin-users" role="tabpanel">
-                  <div className="row">
-                    <div className="col-lg-8">
-                      <div className="card mb-4">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                          <h5 className="mb-0">Admin Users</h5>
-                          <button className="btn btn-primary">
-                            <i className="ri-user-add-line me-2"></i> Add User
-                          </button>
-                        </div>
-                        <div className="table-responsive">
-                          <table className="table table-hover">
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Last Login</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {adminUsers.map((user) => (
-                                <tr key={user.id}>
-                                  <td>{user.name}</td>
-                                  <td>{user.email}</td>
-                                  <td>{user.role}</td>
-                                  <td>{user.lastLogin}</td>
-                                  <td>
-                                    <div className="d-flex">
-                                      <button className="btn btn-sm btn-outline-primary me-2">
-                                        <i className="ri-edit-line"></i>
-                                      </button>
-                                      <button className="btn btn-sm btn-outline-danger">
-                                        <i className="ri-delete-bin-line"></i>
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-lg-4">
-                      <div className="card">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                          <h5 className="mb-0">Roles & Permissions</h5>
-                          <button className="btn btn-primary">
-                            <i className="ri-add-line me-2"></i> Add Role
-                          </button>
-                        </div>
-                        <div className="table-responsive">
-                          <table className="table table-hover">
-                            <thead>
-                              <tr>
-                                <th>Role</th>
-                                <th>Permissions</th>
-                                <th>Users</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {roles.map((role) => (
-                                <tr key={role.id}>
-                                  <td>{role.name}</td>
-                                  <td>
-                                    <div className="text-truncate" style={{ maxWidth: '150px' }}>
-                                      {role.permissions}
-                                    </div>
-                                  </td>
-                                  <td>{role.users}</td>
-                                  <td>
-                                    <div className="d-flex">
-                                      <button className="btn btn-sm btn-outline-primary me-2">
-                                        <i className="ri-edit-line"></i>
-                                      </button>
-                                      <button className="btn btn-sm btn-outline-danger">
-                                        <i className="ri-delete-bin-line"></i>
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="mt-4">
+                  <button type="submit" className="btn btn-primary">
+                    <i className="ri-save-line me-2"></i> Save Settings
+                  </button>
                 </div>
-              </div>
+              </form>
             </div>
-
-           
           </div>
         </div>
       </div>
