@@ -7,7 +7,7 @@ const Home = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [products, setProducts] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+ 
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -31,10 +31,10 @@ const Home = () => {
       }
       const data = await response.json();
       setProducts(data);
-      setLoading(false);
+  
     } catch (err) {
       setError(err.message);
-      setLoading(false);
+   
     }
   };
 
@@ -84,9 +84,7 @@ const Home = () => {
     ? products 
     : products.filter(product => product.category.toLowerCase() === activeCategory);
 
-  if (loading) {
-    return <div className="loading">Loading products...</div>;
-  }
+
 
   if (error) {
     return <div className="error">Error: {error}</div>;
@@ -99,7 +97,7 @@ const Home = () => {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6">
-              <h1 className="hero-title">
+              <h1 className="hero-titl">
                 Radiant Skin <br />
                 Starts Here
               </h1>
@@ -107,13 +105,10 @@ const Home = () => {
                 Discover our premium skincare collection formulated with natural ingredients
                 for your healthiest skin yet.
               </p>
-              <div className="hero-cta">
-                <button className="btn btn-primary me-3">
-                  Shop Now <FiArrowRight />
-                </button>
-                <button className="btn btn-outline-secondary">
-                  Learn More
-                </button>
+              <div className="">
+                 <a href="#products" className="hero-cta">
+                    Shop Now <FiArrowRight />
+                  </a>
               </div>
             </div>
             <div className="col-lg-6">

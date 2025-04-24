@@ -1,9 +1,80 @@
-import React, { useState } from 'react';
-import { FiShoppingCart, FiHeart, FiStar } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiShoppingCart, FiHeart, FiStar, FiSearch, FiArrowRight, } from 'react-icons/fi';
 import './shop.css';
 
 const Shop = () => {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    priceRange: 'all',
+    search: ''
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    filterProducts();
+  }, [filters, products]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      setProducts(data);
+      setFilteredProducts(data);
+      
+    } catch (err) {
+      setError(err.message);
+ 
+    }
+  };
+
+  const filterProducts = () => {
+    let filtered = [...products];
+
+    // Filter by category
+    if (filters.category !== 'all') {
+      filtered = filtered.filter(product => 
+        product.category.toLowerCase() === filters.category.toLowerCase()
+      );
+    }
+
+    // Filter by price range
+    if (filters.priceRange !== 'all') {
+      const [min, max] = filters.priceRange.split('-').map(Number);
+      filtered = filtered.filter(product => {
+        const price = parseFloat(product.price);
+        return price >= min && price <= max;
+      });
+    }
+
+    // Filter by search term
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const categories = [
     { id: 'all', name: 'All Products' },
@@ -13,126 +84,124 @@ const Shop = () => {
     { id: 'sunscreen', name: 'Sunscreens' }
   ];
 
-  const products = [
-    {
-      id: 1,
-      name: 'Glow Renewal Serum',
-      price: 79.99,
-      category: 'serum',
-      rating: 4.5,
-      image: 'https://i.pinimg.com/736x/bc/c3/1e/bcc31ece0cc8f686203030bb31ac7e9d.jpg',
-      isNew: true
-    },
-    {
-      id: 2,
-      name: 'Hydra Boost Moisturizer',
-      price: 59.99,
-      category: 'moisturizer',
-      rating: 4.2,
-      image: 'https://i.pinimg.com/736x/26/1d/31/261d312769a88541cd44fe75a152f81b.jpg'
-    },
-    {
-      id: 3,
-      name: 'Gentle Foaming Cleanser',
-      price: 29.99,
-      category: 'cleanser',
-      rating: 4.7,
-      image: 'https://i.pinimg.com/736x/e2/d5/b3/e2d5b3e0c1c20a41069b363e4853d461.jpg',
-      isBestSeller: true
-    },
-    {
-      id: 4,
-      name: 'UV Defense Sunscreen',
-      price: 39.99,
-      category: 'sunscreen',
-      rating: 4.3,
-      image: 'https://i.pinimg.com/736x/1a/8d/1f/1a8d1f8a0b8b8b8b8b8b8b8b8b8b8b8b.jpg'
-    },
-    {
-      id: 5,
-      name: 'Brightening Vitamin C Serum',
-      price: 65.99,
-      category: 'serum',
-      rating: 4.6,
-      image: 'https://i.pinimg.com/736x/5b/8a/3d/5b8a3d3b3b3b3b3b3b3b3b3b3b3b3b3b.jpg',
-      isNew: true
-    },
-    {
-      id: 6,
-      name: 'Deep Hydration Night Cream',
-      price: 72.99,
-      category: 'moisturizer',
-      rating: 4.4,
-      image: 'https://i.pinimg.com/736x/6a/7d/3b/6a7d3b3b3b3b3b3b3b3b3b3b3b3b3b3b.jpg'
-    },
-    {
-      id: 7,
-      name: 'Oil Control Cleanser',
-      price: 34.99,
-      category: 'cleanser',
-      rating: 4.3,
-      image: 'https://i.pinimg.com/736x/7a/8d/3b/7a8d3b3b3b3b3b3b3b3b3b3b3b3b3b3b.jpg'
-    },
-    {
-      id: 8,
-      name: 'Mineral Tinted Sunscreen',
-      price: 45.99,
-      category: 'sunscreen',
-      rating: 4.5,
-      image: 'https://i.pinimg.com/736x/8a/9d/3b/8a9d3b3b3b3b3b3b3b3b3b3b3b3b3b3b.jpg',
-      isBestSeller: true
-    }
+  const priceRanges = [
+    { id: 'all', name: 'All Prices' },
+    { id: '0-20', name: 'Under $20' },
+    { id: '20-50', name: '$20 - $50' },
+    { id: '50-100', name: '$50 - $100' },
+    { id: '100-9999', name: 'Over $100' }
   ];
 
-  const filteredProducts = activeCategory === 'all'
-    ? products
-    : products.filter(product => product.category === activeCategory);
+
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
 
   return (
     <div className="shop-page">
       {/* Hero Section */}
       <section className="shop-hero">
+        <div className="hero-overlay"></div>
         <div className="container">
-          <h1 className="shop-hero-title">Shop Skincare</h1>
-          <p className="shop-hero-subtitle">Discover products for your perfect routine</p>
+          <div className="hero-content">
+            <h1 className="shop-hero-title">Discover Your Perfect Skincare</h1>
+            <p className="shop-hero-subtitle">Explore our premium collection of skincare products</p>
+            <div className="hero-stats">
+              <div className="stat-item">
+                <span className="stat-number">100+</span>
+                <span className="stat-label">Products</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">4.8</span>
+                <span className="stat-label">Average Rating</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">10k+</span>
+                <span className="stat-label">Happy Customers</span>
+              </div>
+            </div>
+            <a href="#products" className="hero-cta">
+              Shop Now <FiArrowRight />
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* Category Section */}
-      <section className="category-section">
-        <div className="container">
-          <div className="section-header">
-            <h2>Shop by Category</h2>
-            <p>Find the perfect products for your skincare routine</p>
-          </div>
+      <div className="shop-content">
+        {/* Filters Sidebar */}
+        <aside className="filters-sidebar">
+          <div className="filters-container">
+            <h3>Filters</h3>
+            
+            {/* Search */}
+            <div className="filter-group">
+              <label>Search Products</label>
+              <div className="search-box">
+                <input
+                  type="text"
+                  name="search"
+                  value={filters.search}
+                  onChange={handleFilterChange}
+                  placeholder="Search products..."
+                />
+                <FiSearch className="search-icon" />
+              </div>
+            </div>
 
-          <div className="category-tabs">
-            {categories.map(category => (
-              <button
-                key={category.id}
-                className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category.id)}
+            {/* Categories */}
+            <div className="filter-group">
+              <label>Categories</label>
+              <select
+                name="category"
+                value={filters.category}
+                onChange={handleFilterChange}
               >
-                {category.name}
-                {activeCategory === category.id && <span className="tab-indicator"></span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      {/* Products Grid */}
-      <section className="products-section">
-        <div className="container">
+            {/* Price Range */}
+            <div className="filter-group">
+              <label>Price Range</label>
+              <select
+                name="priceRange"
+                value={filters.priceRange}
+                onChange={handleFilterChange}
+              >
+                {priceRanges.map(range => (
+                  <option key={range.id} value={range.id}>
+                    {range.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        {/* Products Section */}
+        <main className="products-section">
+          <div className="products-header">
+            <h2>All Products</h2>
+            <p>Showing {filteredProducts.length} products</p>
+          </div>
+          
           <div className="products-grid">
             {filteredProducts.map(product => (
-              <div className="product-card">
+              <div key={product.id} className="product-card">
                 <div className="product-badges">
                   {product.isNew && <span className="badge new">New</span>}
                   {product.isBestSeller && <span className="badge bestseller">Bestseller</span>}
                 </div>
                 <div className="product-image">
-                  <img src={product.image} alt={product.name} />
+                  <img 
+                    src={product.image ? `http://localhost:8000/storage/${product.image}` : 'https://via.placeholder.com/300'} 
+                    alt={product.name} 
+                  />
                 </div>
                 <div className="product-info">
                   <h3>{product.name}</h3>
@@ -145,16 +214,16 @@ const Shop = () => {
                     ))}
                     <span>({product.rating})</span>
                   </div>
-                  <div className="product-price">${product.price.toFixed(2)}</div>
-                  <button className="btn btn-primary add-to-cart">
+                  <div className="product-price">${Number(product.price).toFixed(2)}</div>
+                  <button className="add-to-cart">
                     <FiShoppingCart /> Add to Cart
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </main>
+      </div>
     </div>
   );
 };
