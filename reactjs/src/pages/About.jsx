@@ -8,8 +8,8 @@ const About = () => {
       {/* Hero Section */}
       <section className="about-hero">
         <div className="container">
-          <h1 className="hero-title">About PHONE SHOP</h1>
-          <p className="hero-subtitle">Innovation at your fingertips</p>
+          <h1 className="hero-title">About SKIN CARE</h1>
+          <p className="hero-subtitle">Natural Beauty, Radiant Skin</p>
         </div>
       </section>
 
@@ -19,8 +19,8 @@ const About = () => {
           <div className="story-grid">
             <div className="story-image" data-aos="fade-right">
               <img 
-                src="https://images.samsung.com/is/image/samsung/assets/sg/2501/smartphones/galaxy-s25/reviews/galaxy-s25-share-image.jpg" 
-                alt="About PHONE SHOP" 
+                src="https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                alt="About SKIN CARE" 
                 className="main-image"
               />
               <div className="image-decoration"></div>
@@ -28,10 +28,10 @@ const About = () => {
             <div className="story-content" data-aos="fade-left">
               <h2 className="section-title">Our Story</h2>
               <p className="story-text">
-                At PHONE SHOP, we believe in innovation and excellence. Our team is dedicated to bringing you the best products from leading brands like Apple, Samsung, and Vivo. Whether you're looking for the latest smartphone, a powerful laptop, or cutting-edge accessories, we've got you covered.
+                At SKIN CARE, we believe in the power of natural beauty and healthy skin. Our team is dedicated to bringing you the finest skincare products from leading brands that prioritize natural ingredients and sustainable practices. Whether you're looking for organic face creams, natural serums, or eco-friendly beauty tools, we've got you covered.
               </p>
               <p className="story-text">
-                We are committed to creating a seamless shopping experience for our customers. From easy navigation on our website to fast and reliable delivery, we strive to make every interaction with PHONE SHOP a positive one. Thank you for choosing us as your trusted partner in technology.
+                We are committed to creating a holistic beauty experience for our customers. From carefully curated product selections to expert skincare advice, we strive to help you achieve your healthiest, most radiant skin. Thank you for choosing us as your trusted partner in natural beauty.
               </p>
               <button className="learn-more-btn">
                 Learn More <FiArrowRight className="icon" />
@@ -47,19 +47,19 @@ const About = () => {
           <h2 className="section-title text-center">Our Values</h2>
           <div className="values-grid">
             <div className="value-card" data-aos="fade-up" data-aos-delay="100">
-              <div className="value-icon">💎</div>
-              <h3>Quality</h3>
-              <p>We source only the highest quality devices and rigorously test all products.</p>
+              <div className="value-icon">🌿</div>
+              <h3>Natural Ingredients</h3>
+              <p>We source only the purest natural ingredients and ensure all products are cruelty-free.</p>
             </div>
             <div className="value-card" data-aos="fade-up" data-aos-delay="200">
-              <div className="value-icon">🚀</div>
-              <h3>Innovation</h3>
-              <p>Always at the forefront of the latest technology trends and advancements.</p>
+              <div className="value-icon">🌎</div>
+              <h3>Sustainability</h3>
+              <p>Committed to eco-friendly practices and sustainable packaging solutions.</p>
             </div>
             <div className="value-card" data-aos="fade-up" data-aos-delay="300">
-              <div className="value-icon">🤝</div>
-              <h3>Customer First</h3>
-              <p>Your satisfaction is our top priority with 24/7 support available.</p>
+              <div className="value-icon">💆‍♀️</div>
+              <h3>Personal Care</h3>
+              <p>Your skin's health is our priority with personalized skincare consultations.</p>
             </div>
           </div>
         </div>
@@ -69,28 +69,28 @@ const About = () => {
       <section className="team-section">
         <div className="container">
           <h2 className="section-title text-center">Meet Our Team</h2>
-          <p className="section-subtitle">The passionate people behind PHONE SHOP</p>
+          <p className="section-subtitle">The passionate experts behind SKIN CARE</p>
           <div className="team-grid">
             <div className="team-card" data-aos="zoom-in">
               <div className="team-image">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Team member" />
+                <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Team member" />
               </div>
-              <h3>David Kim</h3>
-              <p className="team-role">Founder & CEO</p>
+              <h3>Emma Wilson</h3>
+              <p className="team-role">Founder & Skincare Expert</p>
             </div>
             <div className="team-card" data-aos="zoom-in" data-aos-delay="100">
               <div className="team-image">
                 <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Team member" />
               </div>
-              <h3>Sarah Johnson</h3>
-              <p className="team-role">Product Manager</p>
+              <h3>Sophia Chen</h3>
+              <p className="team-role">Product Specialist</p>
             </div>
             <div className="team-card" data-aos="zoom-in" data-aos-delay="200">
               <div className="team-image">
-                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Team member" />
+                <img src="https://randomuser.me/api/portraits/women/75.jpg" alt="Team member" />
               </div>
-              <h3>Michael Chen</h3>
-              <p className="team-role">Tech Specialist</p>
+              <h3>Isabella Martinez</h3>
+              <p className="team-role">Beauty Consultant</p>
             </div>
           </div>
         </div>
