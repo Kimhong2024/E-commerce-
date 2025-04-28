@@ -47,6 +47,16 @@ function Sidebar_menu() {
             <div data-i18n="Product">Product</div>
           </NavLink>
         </li>
+        {/* Category */}
+        <li className="menu-item">
+          <NavLink
+            to="/Category"
+            className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}
+          >
+            <i className="menu-icon tf-icons ri-file-chart-line" />
+            <div data-i18n="Category">Category</div>
+          </NavLink>
+        </li>
 
         {/* Order */}
         <li className="menu-item">
@@ -70,16 +80,7 @@ function Sidebar_menu() {
           </NavLink>
         </li>
 
-        {/* Reports */}
-        <li className="menu-item">
-          <NavLink
-            to="/reports"
-            className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}
-          >
-            <i className="menu-icon tf-icons ri-file-chart-line" />
-            <div data-i18n="Reports">Reports</div>
-          </NavLink>
-        </li>
+        
 
         {/* Invoices */}
         <li className="menu-item">

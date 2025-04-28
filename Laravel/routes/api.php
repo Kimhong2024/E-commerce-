@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSettingsController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -73,4 +74,6 @@ Route::prefix('dashboard')->group(function () {
     Route::get('/revenue-chart', [App\Http\Controllers\DashboardController::class, 'getRevenueChart']);
     Route::get('/sales-distribution', [App\Http\Controllers\DashboardController::class, 'getSalesDistribution']);
 });
+
+Route::apiResource('categories', CategoryController::class);
 

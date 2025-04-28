@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -11,86 +12,106 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
-        return response()->json($products);
+        try {
+            $products = Product::with('category')->get();
+            return response()->json($products);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error fetching products: ' . $e->getMessage()], 500);
+        }
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'category' => 'required|string|max:255',
-            'brand' => 'required|string|max:255',
-            'status' => 'required|in:published,draft,archived',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), Product::rules());
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $product = new Product();
+            $product->name = $request->name;
+            $product->description = $request->description;
+            $product->price = $request->price;
+            $product->stock = $request->stock;
+            $product->category_id = $request->category_id;
+            $product->brand = $request->brand;
+            $product->status = $request->status;
+            $product->is_active = $request->is_active ?? true;
+
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $image->storeAs('public/products', $imageName);
+                $product->image = 'products/' . $imageName;
+            }
+
+            $product->save();
+            return response()->json($product->load('category'), 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error creating product: ' . $e->getMessage()], 500);
         }
-
-        $data = $request->all();
-        $data['is_active'] = $request->boolean('is_active', true);
-
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $data['image'] = $path;
-        }
-
-        $product = Product::create($data);
-        return response()->json($product, 201);
     }
 
     public function show(Product $product)
     {
-        return response()->json($product);
+        try {
+            return response()->json($product->load('category'));
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error fetching product: ' . $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, Product $product)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'sometimes|required|numeric|min:0',
-            'stock' => 'sometimes|required|integer|min:0',
-            'category' => 'sometimes|required|string|max:255',
-            'brand' => 'sometimes|required|string|max:255',
-            'status' => 'sometimes|required|in:published,draft,archived',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), Product::rules());
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $data = $request->all();
-        $data['is_active'] = $request->boolean('is_active', $product->is_active);
-
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
             }
-            $path = $request->file('image')->store('products', 'public');
-            $data['image'] = $path;
-        }
 
-        $product->update($data);
-        return response()->json($product);
+            $product->name = $request->name;
+            $product->description = $request->description;
+            $product->price = $request->price;
+            $product->stock = $request->stock;
+            $product->category_id = $request->category_id;
+            $product->brand = $request->brand;
+            $product->status = $request->status;
+            $product->is_active = $request->is_active ?? true;
+
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($product->image) {
+                    Storage::delete('public/' . $product->image);
+                }
+                
+                $image = $request->file('image');
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $image->storeAs('public/products', $imageName);
+                $product->image = 'products/' . $imageName;
+            }
+
+            $product->save();
+            return response()->json($product->load('category'));
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating product: ' . $e->getMessage()], 500);
+        }
     }
 
     public function destroy(Product $product)
     {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        try {
+            // Delete image if exists
+            if ($product->image) {
+                Storage::delete('public/' . $product->image);
+            }
+            
+            $product->delete();
+            return response()->json(null, 204);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error deleting product: ' . $e->getMessage()], 500);
         }
-        $product->delete();
-        return response()->json(null, 204);
     }
 
     public function toggleActive(Product $product)

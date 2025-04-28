@@ -8,7 +8,7 @@ import Home from './pages/Home';
 import Product from './pages/Product';
 import Order from './pages/Order';
 import Customer from './pages/Customer';
-import Report from './pages/Report';
+import Category from './pages/Category';
 import Invoice from './pages/Invoice';
 import Setting from './pages/Setting';
 import Optional from './pages/Optional';
@@ -34,7 +34,7 @@ function App() {
                 <Route path="/product" element={<Product />} />
                 <Route path="/order" element={<Order />} />
                 <Route path="/customer" element={<Customer />} />
-                <Route path="/reports" element={<Report />} />
+                <Route path="/Category" element={<Category />} />
                 <Route path="/invoices" element={<Invoice />} />
                 <Route path="/settings" element={<Setting />} />
                 <Route path="/optional" element={<Optional />} />

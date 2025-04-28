@@ -4,11 +4,12 @@ import { toast } from 'react-toastify';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000/api';
-axios.defaults.headers.common['Content-Type'] = 'multipart/form-data';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 function Product() {
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -18,50 +19,42 @@ function Product() {
     description: '',
     price: '',
     stock: '',
-    category: '',
+    category_id: '',
     brand: '',
     status: 'draft',
     is_active: true,
     image: null
   });
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
-
-  useEffect(() => {
-    // Filter products based on search term
-    const filtered = products.filter(product => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        product.name.toLowerCase().includes(searchLower) ||
-        product.description.toLowerCase().includes(searchLower) ||
-        product.category.toLowerCase().includes(searchLower) ||
-        product.brand.toLowerCase().includes(searchLower) ||
-        product.price.toString().includes(searchLower) ||
-        product.stock.toString().includes(searchLower)
-      );
-    });
-    setFilteredProducts(filtered);
-  }, [searchTerm, products]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const response = await axios.get('/products');
       setProducts(response.data);
-      setFilteredProducts(response.data);
     } catch (error) {
-      toast.error('Failed to fetch products');
       console.error('Error fetching products:', error);
+      setErrorMessage('Failed to fetch products');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('/categories');
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setErrorMessage('Failed to fetch categories');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -70,7 +63,6 @@ function Product() {
       ...prev,
       [name]: value
     }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -92,81 +84,68 @@ function Product() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
-    
-    try {
-      const formDataToSend = new FormData();
-      
-      // Add all form fields
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description || '');
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('stock', formData.stock);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('brand', formData.brand);
-      formDataToSend.append('status', formData.status);
-      formDataToSend.append('is_active', formData.is_active ? '1' : '0');
-      
-      // Add image if exists
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
-      }
+    setSuccessMessage('');
+    setErrorMessage('');
 
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      };
-
-      if (editingProduct) {
-        await axios.put(`/products/${editingProduct.id}`, formDataToSend, config);
-        toast.success('Product updated successfully');
-      } else {
-        await axios.post('/products', formDataToSend, config);
-        toast.success('Product created successfully');
-      }
-
-      setShowModal(false);
-      setEditingProduct(null);
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        stock: '',
-        category: '',
-        brand: '',
-        status: 'draft',
-        is_active: true,
-        image: null
-      });
-      fetchProducts();
-    } catch (error) {
-      if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        setErrors(validationErrors);
-        
-        // Log validation errors for debugging
-        console.log('Validation errors:', validationErrors);
-        
-        // Show specific error messages
-        Object.keys(validationErrors).forEach(field => {
-          toast.error(`${field}: ${validationErrors[field][0]}`);
-        });
-      } else {
-        toast.error(error.response?.data?.message || 'Operation failed');
-        console.error('Error submitting product:', error);
-      }
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('description', formData.description);
+    data.append('price', formData.price);
+    data.append('stock', formData.stock);
+    data.append('category_id', formData.category_id);
+    data.append('brand', formData.brand);
+    data.append('status', formData.status);
+    data.append('is_active', formData.is_active ? '1' : '0');
+    if (formData.image) {
+      data.append('image', formData.image);
     }
-  };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await axios.delete(`/products/${id}`);
-        toast.success('Product deleted successfully');
+    try {
+      let response;
+      if (editingProduct) {
+        response = await axios.put(`/products/${editingProduct.id}`, data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        });
+        setSuccessMessage('Product updated successfully');
+      } else {
+        response = await axios.post('/products', data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        });
+        setSuccessMessage('Product created successfully');
+      }
+
+      if (response.data) {
+        setShowModal(false);
+        setFormData({
+          name: '',
+          description: '',
+          price: '',
+          stock: '',
+          category_id: '',
+          brand: '',
+          status: 'draft',
+          is_active: true,
+          image: null
+        });
+        setEditingProduct(null);
         fetchProducts();
-      } catch (error) {
-        toast.error('Failed to delete product');
-        console.error('Error deleting product:', error);
+      }
+    } catch (error) {
+      console.error('Operation error:', error);
+      if (error.response) {
+        if (error.response.data.errors) {
+          setErrors(error.response.data.errors);
+        } else {
+          setErrorMessage(`Operation failed: ${error.response.data.message || 'Server error'}`);
+        }
+      } else if (error.request) {
+        setErrorMessage('Operation failed: No response from server');
+      } else {
+        setErrorMessage(`Operation failed: ${error.message}`);
       }
     }
   };
@@ -178,7 +157,7 @@ function Product() {
       description: product.description,
       price: product.price,
       stock: product.stock,
-      category: product.category,
+      category_id: product.category_id,
       brand: product.brand,
       status: product.status,
       is_active: product.is_active,
@@ -187,42 +166,57 @@ function Product() {
     setShowModal(true);
   };
 
-  const handleToggleActive = async (id) => {
-    try {
-      await axios.patch(`/products/${id}/toggle-active`);
-      toast.success('Product status updated successfully');
-      fetchProducts();
-    } catch (error) {
-      toast.error('Failed to update product status');
-      console.error('Error toggling product status:', error);
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await axios.delete(`/products/${id}`);
+        setSuccessMessage('Product deleted successfully');
+        fetchProducts();
+      } catch (error) {
+        console.error('Delete error:', error);
+        if (error.response) {
+          setErrorMessage(`Failed to delete product: ${error.response.data.message || 'Server error'}`);
+        } else if (error.request) {
+          setErrorMessage('Failed to delete product: No response from server');
+        } else {
+          setErrorMessage(`Failed to delete product: ${error.message}`);
+        }
+      }
     }
   };
 
-  // Add this new function to handle checkbox changes
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked
-    }));
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
   };
 
-
-
-  
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (product.category && product.category.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    product.brand.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="layout-wrapper layout-content-navbar">
       <div className="layout-container">
-        {/* Sidebar Menu - Same as Home.jsx */}
-
-        {/* Layout container */}
         <div className="layout-page">
-          
-          {/* Content wrapper */}
           <div className="content-wrapper">
-            {/* Content */}
             <div className="container-xxl flex-grow-1 container-p-y">
+              {/* Success and Error Messages */}
+              {successMessage && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  {successMessage}
+                  <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {errorMessage}
+                  <button type="button" className="btn-close" onClick={() => setErrorMessage('')}></button>
+                </div>
+              )}
+
               <div className="row mb-4">
                 <div className="col-12">
                   <div className="d-flex justify-content-between align-items-center">
@@ -237,230 +231,155 @@ function Product() {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="row mb-4">
-                <div className="col-12">
-                  <ul className="nav nav-tabs" role="tablist">
-                    <li className="nav-item">
-                      <a className="nav-link active" data-bs-toggle="tab" href="#all-products" role="tab">
-                        <i className="ri-list-check me-2"></i> All Products
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Tab Content */}
-              <div className="tab-content">
-                {/* All Products Tab */}
-                <div className="tab-pane fade show active" id="all-products" role="tabpanel">
-                  <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                      <h5 className="mb-0">Product List</h5>
-                      <div className="d-flex gap-2">
-                        <div className="input-group input-group-sm" style={{ width: '300px' }}>
-                          <span className="input-group-text bg-transparent">
-                            <i className="ri-search-line"></i>
-                          </span>
-                          <input 
-                            type="text" 
-                            className="form-control border-start-0" 
-                            placeholder="Search products by name, category, brand, price..."
-                            value={searchTerm}
-                            onChange={handleSearch}
-                          />
-                          {searchTerm && (
-                            <button 
-                              className="btn btn-outline-secondary" 
-                              type="button"
-                              onClick={() => setSearchTerm('')}
-                            >
-                              <i className="ri-close-line"></i>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="table-responsive">
-                      <table className="table table-hover align-middle">
-                        <thead className="table-light">
-                          <tr>
-                            <th style={{ width: '30%' }}>Product</th>
-                            <th style={{ width: '15%' }}>Category</th>
-                            <th style={{ width: '15%' }}>Brand</th>
-                            <th style={{ width: '10%' }}>Price</th>
-                            <th style={{ width: '10%' }}>Stock</th>
-                            <th style={{ width: '10%' }}>Status</th>
-                            <th style={{ width: '10%' }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {loading ? (
-                            <tr>
-                              <td colSpan="7" className="text-center py-4">
-                                <div className="d-flex justify-content-center">
-                                  <div className="spinner-border text-primary" role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : filteredProducts.length === 0 ? (
-                            <tr>
-                              <td colSpan="7" className="text-center py-4">
-                                <div className="d-flex flex-column align-items-center">
-                                  <i className="ri-search-line fs-1 text-muted mb-2"></i>
-                                  <p className="text-muted mb-0">No products found</p>
-                                  {searchTerm && (
-                                    <small className="text-muted">Try adjusting your search</small>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ) : (
-                            filteredProducts.map((product) => (
-                              <tr key={product.id} className="product-row">
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    {product.image ? (
-                                      <div className="avatar avatar-lg me-3">
-                                        <img 
-                                          src={`http://localhost:8000/storage/${product.image}`} 
-                                          alt={product.name} 
-                                          className="rounded-3"
-                                          style={{ 
-                                            width: '60px', 
-                                            height: '60px', 
-                                            objectFit: 'cover',
-                                            backgroundColor: '#f8f9fa'
-                                          }}
-                                          onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/60x60?text=No+Image';
-                                            e.target.onerror = null;
-                                          }}
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div 
-                                        className="avatar avatar-lg me-3 bg-light rounded-3 d-flex align-items-center justify-content-center"
-                                        style={{ width: '60px', height: '60px' }}
-                                      >
-                                        <i className="ri-image-line fs-4 text-muted"></i>
-                                      </div>
-                                    )}
-                                    <div>
-                                      <h6 className="mb-1 fw-semibold">{product.name}</h6>
-                                      <small className="text-muted text-truncate d-block" style={{ maxWidth: '200px' }}>
-                                        {product.description}
-                                      </small>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td>
-                                  <span className="badge bg-label-primary">
-                                    {product.category}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className="badge bg-label-info">
-                                    {product.brand}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className="fw-semibold">${product.price}</span>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <div className="progress flex-grow-1" style={{ height: '6px', width: '60px' }}>
-                                      <div 
-                                        className={`progress-bar ${
-                                          product.stock > 20 ? 'bg-success' : 
-                                          product.stock > 5 ? 'bg-warning' : 'bg-danger'
-                                        }`} 
-                                        role="progressbar" 
-                                        style={{ 
-                                          width: `${Math.min(100, (product.stock / 50) * 100)}%` 
-                                        }}
-                                      />
-                                    </div>
-                                    <span className="ms-2">{product.stock}</span>
-                                  </div>
-                                </td>
-                                <td>
-                                  <div className="form-check form-switch">
-                                    <input
-                                      className="form-check-input"
-                                      type="checkbox"
-                                      checked={product.is_active}
-                                      onChange={() => handleToggleActive(product.id)}
-                                    />
-                                  </div>
-                                </td>
-                                <td>
-                                  <div className="d-flex gap-2">
-                                    <button 
-                                      className="btn btn-sm btn-icon btn-outline-primary"
-                                      onClick={() => handleEdit(product)}
-                                      title="Edit"
-                                    >
-                                      <i className="ri-edit-line" />
-                                    </button>
-                                    <button 
-                                      className="btn btn-sm btn-icon btn-outline-danger"
-                                      onClick={() => handleDelete(product.id)}
-                                      title="Delete"
-                                    >
-                                      <i className="ri-delete-bin-line" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="card-footer d-flex justify-content-between align-items-center">
-                      <div className="text-muted">
-                        Showing <span className="fw-semibold">{filteredProducts.length}</span> of <span className="fw-semibold">{products.length}</span> products
-                      </div>
-                      <nav aria-label="Page navigation">
-                        <ul className="pagination pagination-sm mb-0">
-                          <li className="page-item disabled">
-                            <a className="page-link" href="#" tabIndex="-1">
-                              <i className="ri-arrow-left-s-line"></i>
-                            </a>
-                          </li>
-                          <li className="page-item active"><a className="page-link" href="#">1</a></li>
-                          <li className="page-item"><a className="page-link" href="#">2</a></li>
-                          <li className="page-item"><a className="page-link" href="#">3</a></li>
-                          <li className="page-item">
-                            <a className="page-link" href="#">
-                              <i className="ri-arrow-right-s-line"></i>
-                            </a>
-                          </li>
-                        </ul>
-                      </nav>
+              <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">Product List</h5>
+                  <div className="d-flex gap-2">
+                    <div className="input-group input-group-sm" style={{ width: '300px' }}>
+                      <span className="input-group-text bg-transparent">
+                        <i className="ri-search-line"></i>
+                      </span>
+                      <input 
+                        type="text" 
+                        className="form-control border-start-0" 
+                        placeholder="Search products..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                      />
+                      {searchTerm && (
+                        <button 
+                          className="btn btn-outline-secondary" 
+                          type="button"
+                          onClick={() => setSearchTerm('')}
+                        >
+                          <i className="ri-close-line"></i>
+                        </button>
+                      )}
                     </div>
                   </div>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: '30%' }}>Name</th>
+                        <th style={{ width: '15%' }}>Category</th>
+                        <th style={{ width: '15%' }}>Brand</th>
+                        <th style={{ width: '10%' }}>Price</th>
+                        <th style={{ width: '10%' }}>Stock</th>
+                        <th style={{ width: '10%' }}>Status</th>
+                        <th style={{ width: '10%' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr>
+                          <td colSpan="7" className="text-center py-4">
+                            <div className="d-flex justify-content-center">
+                              <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : filteredProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="text-center py-4">
+                            <div className="d-flex flex-column align-items-center">
+                              <i className="ri-search-line fs-1 text-muted mb-2"></i>
+                              <p className="text-muted mb-0">No products found</p>
+                              {searchTerm && (
+                                <small className="text-muted">Try adjusting your search</small>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredProducts.map((product) => (
+                          <tr key={product.id}>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                {product.image ? (
+                                  <img 
+                                    src={`http://localhost:8000/storage/${product.image}`} 
+                                    alt={product.name}
+                                    className="rounded-3 me-3"
+                                    style={{ 
+                                      width: '60px', 
+                                      height: '60px', 
+                                      objectFit: 'cover',
+                                      backgroundColor: '#f8f9fa'
+                                    }}
+                                    onError={(e) => {
+                                      e.target.src = 'https://via.placeholder.com/60x60?text=No+Image';
+                                      e.target.onerror = null;
+                                    }}
+                                  />
+                                ) : (
+                                  <div 
+                                    className="bg-light rounded-3 me-3 d-flex align-items-center justify-content-center"
+                                    style={{ width: '60px', height: '60px' }}
+                                  >
+                                    <i className="ri-image-line fs-4 text-muted"></i>
+                                  </div>
+                                )}
+                                <div>
+                                  <h6 className="mb-1 fw-semibold">{product.name}</h6>
+                                  <small className="text-muted text-truncate d-block" style={{ maxWidth: '200px' }}>
+                                    {product.description || 'No description'}
+                                  </small>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="badge bg-label-primary">
+                                {product.category?.name || 'Uncategorized'}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="badge bg-label-info">
+                                {product.brand}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="fw-semibold">${product.price}</span>
+                            </td>
+                            <td>
+                              <span className={`badge bg-label-${product.stock > 10 ? 'success' : 'warning'}`}>
+                                {product.stock}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`badge bg-label-${product.status === 'published' ? 'success' : product.status === 'draft' ? 'warning' : 'danger'}`}>
+                                {product.status}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <button 
+                                  className="btn btn-sm btn-icon btn-outline-primary"
+                                  onClick={() => handleEdit(product)}
+                                  title="Edit"
+                                >
+                                  <i className="ri-edit-line" />
+                                </button>
+                                <button 
+                                  className="btn btn-sm btn-icon btn-outline-danger"
+                                  onClick={() => handleDelete(product.id)}
+                                  title="Delete"
+                                >
+                                  <i className="ri-delete-bin-line" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <footer className="content-footer footer bg-footer-theme">
-              <div className="container-xxl">
-                <div className="footer-container d-flex align-items-center justify-content-between py-3 flex-md-row flex-column">
-                  <div className="mb-2 mb-md-0">
-                    © {new Date().getFullYear()}, made with <span className="text-danger">❤️</span> by Your Company
-                  </div>
-                  <div>
-                    <a href="#" className="footer-link me-4">License</a>
-                    <a href="#" className="footer-link me-4">Help</a>
-                  </div>
-                </div>
-              </div>
-            </footer>
           </div>
         </div>
       </div>
@@ -485,12 +404,13 @@ function Product() {
                       description: '',
                       price: '',
                       stock: '',
-                      category: '',
+                      category_id: '',
                       brand: '',
                       status: 'draft',
                       is_active: true,
                       image: null
                     });
+                    setErrors({});
                   }}
                 ></button>
               </div>
@@ -512,7 +432,7 @@ function Product() {
                         {formData.image ? (
                           <img 
                             src={typeof formData.image === 'string' 
-                              ? `/storage/${formData.image}` 
+                              ? `http://localhost:8000/storage/${formData.image}` 
                               : URL.createObjectURL(formData.image)} 
                             alt="Product" 
                             className="w-100 h-100 object-fit-cover"
@@ -556,6 +476,33 @@ function Product() {
                     </div>
                   </div>
 
+                  {/* Category Selection */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Category</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <i className="ri-folder-line"></i>
+                      </span>
+                      <select
+                        className={`form-select ${errors.category_id ? 'is-invalid' : ''}`}
+                        name="category_id"
+                        value={formData.category_id}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.category_id && (
+                        <div className="invalid-feedback">{errors.category_id[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Product Price */}
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Price</label>
@@ -574,6 +521,75 @@ function Product() {
                       />
                       {errors.price && (
                         <div className="invalid-feedback">{errors.price[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Stock */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Stock</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <i className="ri-store-2-line"></i>
+                      </span>
+                      <input
+                        type="number"
+                        className={`form-control ${errors.stock ? 'is-invalid' : ''}`}
+                        name="stock"
+                        value={formData.stock}
+                        onChange={handleInputChange}
+                        placeholder="Enter stock quantity"
+                        min="0"
+                        required
+                      />
+                      {errors.stock && (
+                        <div className="invalid-feedback">{errors.stock[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Brand */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Brand</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <i className="ri-price-tag-3-line"></i>
+                      </span>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.brand ? 'is-invalid' : ''}`}
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleInputChange}
+                        placeholder="Enter brand name"
+                        required
+                      />
+                      {errors.brand && (
+                        <div className="invalid-feedback">{errors.brand[0]}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Status */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Status</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent">
+                        <i className="ri-checkbox-circle-line"></i>
+                      </span>
+                      <select
+                        className={`form-select ${errors.status ? 'is-invalid' : ''}`}
+                        name="status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                      {errors.status && (
+                        <div className="invalid-feedback">{errors.status[0]}</div>
                       )}
                     </div>
                   </div>
@@ -599,114 +615,20 @@ function Product() {
                     </div>
                   </div>
 
-                  {/* Stock Quantity */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Stock Quantity</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-transparent">
-                        <i className="ri-store-2-line"></i>
-                      </span>
-                      <input
-                        type="number"
-                        className={`form-control ${errors.stock ? 'is-invalid' : ''}`}
-                        name="stock"
-                        value={formData.stock}
-                        onChange={handleInputChange}
-                        placeholder="Enter stock quantity"
-                        min="0"
-                        required
-                      />
-                      {errors.stock && (
-                        <div className="invalid-feedback">{errors.stock[0]}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Product Status */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Status</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-transparent">
-                        <i className="ri-checkbox-circle-line"></i>
-                      </span>
-                      <select
-                        className={`form-select ${errors.status ? 'is-invalid' : ''}`}
-                        name="status"
-                        value={formData.status}
-                        onChange={handleInputChange}
-                        required
-                      >
-                        <option value="published">Published</option>
-                        <option value="draft">Draft</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                      {errors.status && (
-                        <div className="invalid-feedback">{errors.status[0]}</div>
-                      )}
-                    </div>
-                  </div>
-
                   {/* Active Status */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Active Status</label>
+                  <div className="col-12">
                     <div className="form-check form-switch">
                       <input
-                        className={`form-check-input ${errors.is_active ? 'is-invalid' : ''}`}
+                        className="form-check-input"
                         type="checkbox"
                         name="is_active"
                         checked={formData.is_active}
-                        onChange={handleCheckboxChange}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          is_active: e.target.checked
+                        }))}
                       />
-                      <label className="form-check-label">
-                        {formData.is_active ? 'Active' : 'Inactive'}
-                      </label>
-                      {errors.is_active && (
-                        <div className="invalid-feedback">{errors.is_active[0]}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Category Input */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Category</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-transparent">
-                        <i className="ri-folder-line"></i>
-                      </span>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.category ? 'is-invalid' : ''}`}
-                        name="category"
-                        value={formData.category}
-                        onChange={handleInputChange}
-                        placeholder="Enter category"
-                        required
-                      />
-                      {errors.category && (
-                        <div className="invalid-feedback">{errors.category[0]}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Brand Input */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Brand</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-transparent">
-                        <i className="ri-price-tag-3-line"></i>
-                      </span>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.brand ? 'is-invalid' : ''}`}
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleInputChange}
-                        placeholder="Enter brand"
-                        required
-                      />
-                      {errors.brand && (
-                        <div className="invalid-feedback">{errors.brand[0]}</div>
-                      )}
+                      <label className="form-check-label">Active</label>
                     </div>
                   </div>
 
@@ -724,12 +646,13 @@ function Product() {
                             description: '',
                             price: '',
                             stock: '',
-                            category: '',
+                            category_id: '',
                             brand: '',
                             status: 'draft',
                             is_active: true,
                             image: null
                           });
+                          setErrors({});
                         }}
                       >
                         Cancel

@@ -14,7 +14,7 @@ class Product extends Model
         'description',
         'price',
         'stock',
-        'category',
+        'category_id',
         'brand',
         'status',
         'is_active',
@@ -35,5 +35,20 @@ class Product extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public static function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'brand' => 'required|string|max:255',
+            'status' => 'required|in:draft,published,archived',
+            'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ];
     }
 } 
