@@ -112,11 +112,11 @@ function Sidebar_menu() {
         {/* Optional Menu Item */}
         <li className="menu-item">
           <NavLink
-            to="/optional"
+            to="/HeroSection"
             className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}
           >
             <i className="menu-icon tf-icons ri-star-line" />
-            <div data-i18n="Optional">Optional</div>
+            <div data-i18n="HeroSection">HeroSection</div>
           </NavLink>
         </li>
       </ul>

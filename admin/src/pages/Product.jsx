@@ -230,6 +230,18 @@ function Product() {
                   </div>
                 </div>
               </div>
+               {/* Tabs */}
+               <div className="row mb-4">
+                <div className="col-12">
+                  <ul className="nav nav-tabs" role="tablist">
+                    <li className="nav-item">
+                      <a className="nav-link active" data-bs-toggle="tab" href="#all-products" role="tab">
+                        <i className="ri-list-check me-2"></i> All Product
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
 
               <div className="card">
                 <div className="card-header d-flex justify-content-between align-items-center">

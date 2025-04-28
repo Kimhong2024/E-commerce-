@@ -201,9 +201,21 @@ const Category = () => {
                   </div>
                 </div>
               </div>
+              {/* Tabs */}
+              <div className="row mb-4">
+                <div className="col-12">
+                  <ul className="nav nav-tabs" role="tablist">
+                    <li className="nav-item">
+                      <a className="nav-link active" data-bs-toggle="tab" href="#all-products" role="tab">
+                        <i className="ri-list-check me-2"></i> All Categories
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
 
-              <div className="card">
-                <div className="card-header d-flex justify-content-between align-items-center">
+                  <div className="card">
+                    <div className="card-header d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">Category List</h5>
                   <div className="d-flex gap-2">
                     <div className="input-group input-group-sm" style={{ width: '300px' }}>
@@ -227,8 +239,8 @@ const Category = () => {
                         </button>
                       )}
                     </div>
-                  </div>
-                </div>
+                            </div>
+                          </div>
                 <div className="table-responsive">
                   <table className="table table-hover align-middle">
                     <thead className="table-light">
@@ -320,18 +332,18 @@ const Category = () => {
                                   <i className="ri-delete-bin-line" />
                                 </button>
                               </div>
-                            </td>
-                          </tr>
+                                </td>
+                              </tr>
                         ))
                       )}
-                    </tbody>
-                  </table>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                      </div>
+                    </div>
 
       {/* Add/Edit Category Modal */}
       {showModal && (
@@ -356,7 +368,7 @@ const Category = () => {
                     setErrors({});
                   }}
                 ></button>
-              </div>
+                            </div>
               <div className="modal-body">
                 <form onSubmit={handleSubmit} className="row g-3">
                   {/* Category Image Upload */}
@@ -394,8 +406,8 @@ const Category = () => {
                         onChange={handleFileChange}
                         style={{ width: '200px' }}
                       />
-                    </div>
                   </div>
+                </div>
 
                   {/* Category Name */}
                   <div className="col-12">
@@ -417,7 +429,7 @@ const Category = () => {
                         <div className="invalid-feedback">{errors.name[0]}</div>
                       )}
                     </div>
-                  </div>
+                            </div>
 
                   {/* Category Description */}
                   <div className="col-12">
@@ -437,8 +449,8 @@ const Category = () => {
                       {errors.description && (
                         <div className="invalid-feedback">{errors.description[0]}</div>
                       )}
-                    </div>
                   </div>
+                </div>
 
                   {/* Form Actions */}
                   <div className="col-12 mt-4">
@@ -458,10 +470,10 @@ const Category = () => {
                         }}
                       >
                         Cancel
-                      </button>
+                        </button>
                       <button type="submit" className="btn btn-primary">
                         {editingCategory ? 'Update Category' : 'Add Category'}
-                      </button>
+                                  </button>
                     </div>
                   </div>
                 </form>

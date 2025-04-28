@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { FiShoppingCart, FiHeart, FiStar, FiSearch, FiArrowRight, } from 'react-icons/fi';
-import './shop.css';
+import { FiShoppingCart, FiHeart, FiStar, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import HeroSection from '../components/HeroSection';
+import axios from 'axios';
+import '../styles/shop.css';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     category: 'all',
     priceRange: 'all',
-    search: ''
+    search: '',
+    sort: 'latest'
   });
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -23,17 +29,24 @@ const Shop = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/products');
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      const data = await response.json();
-      setProducts(data);
-      setFilteredProducts(data);
-      
+      setLoading(true);
+      const response = await axios.get('http://localhost:8000/api/products');
+      setProducts(response.data);
+      setFilteredProducts(response.data);
     } catch (err) {
-      setError(err.message);
- 
+      setError('Failed to fetch products');
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/categories');
+      setCategories(response.data);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
   };
 
@@ -43,7 +56,7 @@ const Shop = () => {
     // Filter by category
     if (filters.category !== 'all') {
       filtered = filtered.filter(product => 
-        product.category.toLowerCase() === filters.category.toLowerCase()
+        product.category_id === parseInt(filters.category)
       );
     }
 
@@ -65,6 +78,21 @@ const Shop = () => {
       );
     }
 
+    // Sort products
+    switch (filters.sort) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'name':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
     setFilteredProducts(filtered);
   };
 
@@ -76,68 +104,49 @@ const Shop = () => {
     }));
   };
 
-  const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'cleanser', name: 'Cleansers' },
-    { id: 'serum', name: 'Serums' },
-    { id: 'moisturizer', name: 'Moisturizers' },
-    { id: 'sunscreen', name: 'Sunscreens' }
-  ];
-
-  const priceRanges = [
-    { id: 'all', name: 'All Prices' },
-    { id: '0-20', name: 'Under $20' },
-    { id: '20-50', name: '$20 - $50' },
-    { id: '50-100', name: '$50 - $100' },
-    { id: '100-9999', name: 'Over $100' }
-  ];
-
-
-
-  if (error) {
-    return <div className="error">Error: {error}</div>;
-  }
+  const clearFilters = () => {
+    setFilters({
+      category: 'all',
+      priceRange: 'all',
+      search: '',
+      sort: 'latest'
+    });
+  };
 
   return (
     <div className="shop-page">
-      {/* Hero Section */}
-      <section className="shop-hero">
-        <div className="hero-overlay"></div>
-        <div className="container">
-          <div className="hero-content">
-            <h1 className="shop-hero-title">Discover Your Perfect Skincare</h1>
-            <p className="shop-hero-subtitle">Explore our premium collection of skincare products</p>
-            <div className="hero-stats">
-              <div className="stat-item">
-                <span className="stat-number">100+</span>
-                <span className="stat-label">Products</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">4.8</span>
-                <span className="stat-label">Average Rating</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">10k+</span>
-                <span className="stat-label">Happy Customers</span>
-              </div>
-            </div>
-            <a href="#products" className="hero-cta">
-              Shop Now <FiArrowRight />
-            </a>
-          </div>
-        </div>
-      </section>
+      <HeroSection pageName="shop" />
 
       <div className="shop-content">
+        {/* Mobile Filter Toggle */}
+        <div className="mobile-filter-toggle">
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <FiFilter className="me-2" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+        </div>
+
         {/* Filters Sidebar */}
-        <aside className="filters-sidebar">
+        <aside className={`filters-sidebar ${showFilters ? 'show' : ''}`}>
           <div className="filters-container">
-            <h3>Filters</h3>
-            
+            <div className="filters-header">
+              <h3>Filters</h3>
+              <button 
+                className="btn btn-link"
+                onClick={clearFilters}
+              >
+                Clear All
+              </button>
+            </div>
+
             {/* Search */}
             <div className="filter-group">
               <label>Search Products</label>
               <div className="search-box">
+                <FiSearch className="search-icon" />
                 <input
                   type="text"
                   name="search"
@@ -145,7 +154,14 @@ const Shop = () => {
                   onChange={handleFilterChange}
                   placeholder="Search products..."
                 />
-                <FiSearch className="search-icon" />
+                {filters.search && (
+                  <button 
+                    className="clear-search"
+                    onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
+                  >
+                    <FiX />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -157,6 +173,7 @@ const Shop = () => {
                 value={filters.category}
                 onChange={handleFilterChange}
               >
+                <option value="all">All Categories</option>
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -173,11 +190,28 @@ const Shop = () => {
                 value={filters.priceRange}
                 onChange={handleFilterChange}
               >
-                {priceRanges.map(range => (
-                  <option key={range.id} value={range.id}>
-                    {range.name}
-                  </option>
-                ))}
+                <option value="all">All Prices</option>
+                <option value="0-50">Under $50</option>
+                <option value="50-100">$50 - $100</option>
+                <option value="100-200">$100 - $200</option>
+                <option value="200-500">$200 - $500</option>
+                <option value="500-1000">$500 - $1000</option>
+                <option value="1000-9999">Over $1000</option>
+              </select>
+            </div>
+
+            {/* Sort */}
+            <div className="filter-group">
+              <label>Sort By</label>
+              <select
+                name="sort"
+                value={filters.sort}
+                onChange={handleFilterChange}
+              >
+                <option value="latest">Latest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name</option>
               </select>
             </div>
           </div>
@@ -189,39 +223,65 @@ const Shop = () => {
             <h2>All Products</h2>
             <p>Showing {filteredProducts.length} products</p>
           </div>
-          
-          <div className="products-grid">
-            {filteredProducts.map(product => (
-              <div key={product.id} className="product-card">
-                <div className="product-badges">
-                  {product.isNew && <span className="badge new">New</span>}
-                  {product.isBestSeller && <span className="badge bestseller">Bestseller</span>}
-                </div>
-                <div className="product-image">
-                  <img 
-                    src={product.image ? `http://localhost:8000/storage/${product.image}` : 'https://via.placeholder.com/300'} 
-                    alt={product.name} 
-                  />
-                </div>
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <div className="product-rating">
-                    {[...Array(5)].map((_, i) => (
-                      <FiStar
-                        key={i}
-                        className={i < Math.floor(product.rating) ? 'filled' : ''}
-                      />
-                    ))}
-                    <span>({product.rating})</span>
-                  </div>
-                  <div className="product-price">${Number(product.price).toFixed(2)}</div>
-                  <button className="add-to-cart">
-                    <FiShoppingCart /> Add to Cart
-                  </button>
-                </div>
+
+          {loading ? (
+            <div className="loading-spinner">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : error ? (
+            <div className="error-message">
+              <p>{error}</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="no-products">
+              <p>No products found matching your criteria</p>
+            </div>
+          ) : (
+            <div className="products-grid">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="product-card">
+                  <div className="product-badges">
+                    {product.is_new && <span className="badge new">New</span>}
+                    {product.is_bestseller && <span className="badge bestseller">Bestseller</span>}
+                  </div>
+                  <div className="product-image">
+                    <img 
+                      src={product.image ? `http://localhost:8000/storage/${product.image}` : 'https://via.placeholder.com/300'} 
+                      alt={product.name}
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/300?text=No+Image';
+                      }}
+                    />
+                    <div className="product-actions">
+                      <button className="btn-wishlist">
+                        <FiHeart />
+                      </button>
+                      <button className="btn-cart">
+                        <FiShoppingCart />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="product-info">
+                    <h3 className="product-name">{product.name}</h3>
+                    <div className="product-rating">
+                      {[...Array(5)].map((_, i) => (
+                        <FiStar
+                          key={i}
+                          className={i < Math.floor(product.rating) ? 'filled' : ''}
+                        />
+                      ))}
+                      <span>({product.rating})</span>
+                    </div>
+                    <div className="product-price">
+                      ${Number(product.price).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>

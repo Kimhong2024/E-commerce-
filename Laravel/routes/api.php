@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSettingsController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HeroSectionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -76,4 +77,11 @@ Route::prefix('dashboard')->group(function () {
 });
 
 Route::apiResource('categories', CategoryController::class);
+
+// Hero Section Routes
+Route::get('/hero-sections', [HeroSectionController::class, 'index']);
+Route::get('/hero-sections/{page}', [HeroSectionController::class, 'show']);
+Route::post('/hero-sections', [HeroSectionController::class, 'store']);
+Route::put('/hero-sections/{id}', [HeroSectionController::class, 'update']);
+Route::delete('/hero-sections/{id}', [HeroSectionController::class, 'destroy']);
 
