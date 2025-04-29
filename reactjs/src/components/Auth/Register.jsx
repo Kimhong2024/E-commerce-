@@ -4,72 +4,60 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaLock, FaEye, FaEyeSlash 
 import './Auth.css';
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     address: '',
     password: '',
-    confirmPassword: '',
+    password_confirmation: '',
+    terms: false
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const togglePasswordVisibility = (field) => {
-    if (field === 'password') {
-      setShowPassword(!showPassword);
-    } else {
-      setShowConfirmPassword(!showConfirmPassword);
-    }
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    
-    // Validate password strength
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-    
     setLoading(true);
 
     try {
-      // Here you would typically make an API call to your backend
-      // For now, we'll simulate a successful registration
-      console.log('Registration attempt with:', formData);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Store user token in localStorage (in a real app, this would come from your API)
-      localStorage.setItem('userToken', 'dummy-token');
-      localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', formData.name);
-      
-      // Redirect to home page or dashboard
+      const response = await fetch('http://localhost:8000/api/customer/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.customer));
+
+      // Navigate to home page
       navigate('/');
     } catch (err) {
-      setError('Registration failed. Please try again.');
-      console.error('Registration error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -129,6 +117,7 @@ const Register = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter your phone number"
+                required
               />
             </div>
           </div>
@@ -137,13 +126,13 @@ const Register = () => {
             <label htmlFor="address">Address</label>
             <div className="input-group">
               <FaMapMarkerAlt className="input-icon" />
-              <input
-                type="text"
+              <textarea
                 id="address"
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="Enter your address"
+                required
               />
             </div>
           </div>
@@ -164,7 +153,7 @@ const Register = () => {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => togglePasswordVisibility('password')}
+                onClick={togglePasswordVisibility}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -172,31 +161,31 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
+            <label htmlFor="password_confirmation">Confirm Password</label>
             <div className="input-group">
               <FaLock className="input-icon" />
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
+                type="password"
+                id="password_confirmation"
+                name="password_confirmation"
+                value={formData.password_confirmation}
                 onChange={handleChange}
                 placeholder="Confirm your password"
                 required
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => togglePasswordVisibility('confirm')}
-              >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
             </div>
           </div>
 
           <div className="form-options">
             <div className="terms-checkbox">
-              <input type="checkbox" id="terms" required />
+              <input
+                type="checkbox"
+                id="terms"
+                name="terms"
+                checked={formData.terms}
+                onChange={handleChange}
+                required
+              />
               <label htmlFor="terms">
                 I agree to the <Link to="/terms">Terms of Service</Link> and{' '}
                 <Link to="/privacy">Privacy Policy</Link>

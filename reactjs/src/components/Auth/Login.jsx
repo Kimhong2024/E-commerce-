@@ -48,6 +48,9 @@ const Login = () => {
       localStorage.setItem('userEmail', formData.email);
       localStorage.setItem('userName', formattedName);
       
+      // Dispatch a custom event to notify other components about the login
+      window.dispatchEvent(new Event('storage'));
+      
       // Redirect to home page or dashboard
       navigate('/');
     } catch (err) {

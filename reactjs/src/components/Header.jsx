@@ -15,8 +15,8 @@ const Header = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    // Check if user is logged in and get user data
+  // Function to check login status and update user data
+  const checkLoginStatus = () => {
     const token = localStorage.getItem('userToken');
     const userName = localStorage.getItem('userName');
     const userEmail = localStorage.getItem('userEmail');
@@ -27,7 +27,15 @@ const Header = () => {
         name: userName,
         email: userEmail || ''
       });
+    } else {
+      setIsLoggedIn(false);
+      setUser({ name: '', email: '' });
     }
+  };
+
+  // Check login status on component mount
+  useEffect(() => {
+    checkLoginStatus();
 
     // Add event listener to close dropdown when clicking outside
     const handleClickOutside = (event) => {
@@ -37,9 +45,26 @@ const Header = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    
+    // Add event listener for storage changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'userToken' || e.key === 'userName' || e.key === 'userEmail') {
+        checkLoginStatus();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('storage', handleStorageChange);
     };
+  }, []);
+
+  // Set up an interval to check login status periodically
+  useEffect(() => {
+    const interval = setInterval(checkLoginStatus, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {

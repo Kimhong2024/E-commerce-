@@ -8,6 +8,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSettingsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HeroSectionController;
+use App\Http\Controllers\CustomerAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -84,4 +85,16 @@ Route::get('/hero-sections/{page}', [HeroSectionController::class, 'show']);
 Route::post('/hero-sections', [HeroSectionController::class, 'store']);
 Route::put('/hero-sections/{id}', [HeroSectionController::class, 'update']);
 Route::delete('/hero-sections/{id}', [HeroSectionController::class, 'destroy']);
+
+// Customer Authentication Routes
+Route::prefix('customer')->group(function () {
+    Route::post('register', [CustomerAuthController::class, 'register']);
+    Route::post('login', [CustomerAuthController::class, 'login']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [CustomerAuthController::class, 'logout']);
+        Route::get('profile', [CustomerAuthController::class, 'profile']);
+        Route::put('profile', [CustomerAuthController::class, 'updateProfile']);
+    });
+});
 
