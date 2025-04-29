@@ -30,6 +30,20 @@ ChartJS.register(
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000/api';
 
+// Add request interceptor to include auth token
+axios.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 function Home() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
@@ -46,8 +60,10 @@ function Home() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching dashboard data...');
       
       // Fetch all dashboard data in parallel
+      console.log('Making API requests...');
       const [
         statsResponse,
         recentOrdersResponse,
@@ -61,6 +77,14 @@ function Home() {
         axios.get('/dashboard/revenue-chart'),
         axios.get('/dashboard/sales-distribution')
       ]);
+      
+      console.log('API responses received:', {
+        stats: statsResponse.data,
+        recentOrders: recentOrdersResponse.data,
+        topProducts: topProductsResponse.data,
+        revenueChart: revenueChartResponse.data,
+        salesDistribution: salesDistributionResponse.data
+      });
       
       // Process stats data
       const statsData = [
@@ -144,7 +168,24 @@ function Home() {
       setSalesDistributionData(salesData);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      
+      // More detailed error message
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
+        toast.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Error request:', error.request);
+        toast.error('No response received from server. Check if the Laravel server is running.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message);
+        toast.error(`Error: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

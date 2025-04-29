@@ -287,7 +287,7 @@ const Category = () => {
                             <td>
                               {category.image ? (
                                 <img 
-                                  src={`/storage/${category.image}`} 
+                                  src={`http://localhost:8000/storage/${category.image}`} 
                                   alt={category.name}
                                   className="rounded-3"
                                   style={{ 
@@ -297,7 +297,7 @@ const Category = () => {
                                     backgroundColor: '#f8f9fa'
                                   }}
                                   onError={(e) => {
-                                    e.target.src = 'https://via.placeholder.com/60x60?text=No+Image';
+                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNlOWVjZWYiLz48dGV4dCB4PSIzMCIgeT0iMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
                                     e.target.onerror = null;
                                   }}
                                 />

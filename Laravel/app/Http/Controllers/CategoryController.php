@@ -22,11 +22,7 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
+            $validator = Validator::make($request->all(), Category::rules());
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
@@ -39,8 +35,8 @@ class CategoryController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = time() . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('public/categories', $imageName);
-                $category->image = 'categories/' . $imageName;
+                $image->storeAs('category', $imageName, 'public');
+                $category->image = 'category/' . $imageName;
             }
 
             $category->save();
@@ -62,11 +58,7 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
+            $validator = Validator::make($request->all(), Category::rules());
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
@@ -78,13 +70,13 @@ class CategoryController extends Controller
             if ($request->hasFile('image')) {
                 // Delete old image if exists
                 if ($category->image) {
-                    Storage::delete('public/' . $category->image);
+                    Storage::disk('public')->delete($category->image);
                 }
                 
                 $image = $request->file('image');
                 $imageName = time() . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('public/categories', $imageName);
-                $category->image = 'categories/' . $imageName;
+                $image->storeAs('category', $imageName, 'public');
+                $category->image = 'category/' . $imageName;
             }
 
             $category->save();
@@ -99,7 +91,7 @@ class CategoryController extends Controller
         try {
             // Delete image if exists
             if ($category->image) {
-                Storage::delete('public/' . $category->image);
+                Storage::disk('public')->delete($category->image);
             }
             
             $category->delete();

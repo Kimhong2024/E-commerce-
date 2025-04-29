@@ -18,10 +18,14 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('password'),
         ]);
 
         $this->call([
             CustomerSeeder::class,
         ]);
+
+        // Add dashboard test data
+        $this->call(DashboardTestDataSeeder::class);
     }
 }
