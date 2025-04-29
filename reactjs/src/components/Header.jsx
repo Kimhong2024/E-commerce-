@@ -33,7 +33,7 @@ const Header = () => {
     }
   };
 
-  // Check login status on component mount
+  // Check login status on component mount and when localStorage changes
   useEffect(() => {
     checkLoginStatus();
 

@@ -51,9 +51,13 @@ const Register = () => {
       }
 
       // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.customer));
-
+      localStorage.setItem('userToken', data.token);
+      localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('userName', formData.name);
+      
+      // Dispatch a custom event to notify other components about the registration
+      window.dispatchEvent(new Event('storage'));
+      
       // Navigate to home page
       navigate('/');
     } catch (err) {
