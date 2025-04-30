@@ -95,6 +95,7 @@ Route::prefix('customer')->group(function () {
         Route::post('logout', [CustomerAuthController::class, 'logout']);
         Route::get('profile', [CustomerAuthController::class, 'profile']);
         Route::put('profile', [CustomerAuthController::class, 'updateProfile']);
+        Route::get('orders', [OrderController::class, 'customerOrders']);
     });
 });
 

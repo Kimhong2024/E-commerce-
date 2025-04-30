@@ -176,4 +176,26 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    public function customerOrders(Request $request)
+    {
+        $customer = $request->user();
+        
+        $query = Order::with(['items.product'])
+            ->where('customer_id', $customer->id)
+            ->search($request->search)
+            ->filterByStatus($request->status)
+            ->filterByPaymentStatus($request->payment_status)
+            ->filterByDateRange($request->date_from, $request->date_to)
+            ->latest();
+
+        $orders = $query->paginate(10);
+
+        return response()->json([
+            'data' => $orders->items(),
+            'current_page' => $orders->currentPage(),
+            'last_page' => $orders->lastPage(),
+            'total' => $orders->total(),
+        ]);
+    }
 } 

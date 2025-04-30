@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiPackage, FiClock, FiCheck, FiX, FiArrowLeft, FiEye } from 'react-icons/fi';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import './Order.css';
 
 const Order = () => {
@@ -10,89 +11,75 @@ const Order = () => {
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [currentToken, setCurrentToken] = useState(localStorage.getItem('token'));
+  const navigate = useNavigate();
+
+  // Listen for storage changes (like when token is removed during logout)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('token');
+      if (newToken !== currentToken) {
+        setCurrentToken(newToken);
+        if (!newToken) {
+          // Clear all states when user logs out
+          setOrders([]);
+          setError(null);
+          navigate('/login');
+        } else {
+          // Fetch fresh data when new user logs in
+          fetchOrders();
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentToken, navigate]);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Please login to view your orders');
+      toast.error('Please login to view your orders');
+      navigate('/login');
+      return;
+    }
     fetchOrders();
-  }, []);
+  }, [navigate]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      // In a real application, this would be an API call to fetch orders
-      const response = await axios.get('http://localhost:8000/api/orders');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to view your orders');
+        toast.error('Please login to view your orders');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get('http://localhost:8000/api/customer/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      // Ensure we're setting an array, even if the API returns unexpected data
       if (response.data && response.data.data && Array.isArray(response.data.data)) {
         setOrders(response.data.data);
       } else {
-        console.error('API returned unexpected data format:', response.data);
         setOrders([]);
       }
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setError('Failed to load orders. Please try again later.');
-      // Mock data for demonstration
-      setOrders([
-        {
-          id: 'ORD-12345',
-          date: '2023-05-15',
-          status: 'Delivered',
-          total: 129.99,
-          items: [
-            { id: 1, name: 'Organic Face Cream', price: 49.99, quantity: 1, image: 'https://via.placeholder.com/80' },
-            { id: 2, name: 'Natural Shampoo', price: 24.99, quantity: 2, image: 'https://via.placeholder.com/80' },
-            { id: 3, name: 'Hand Lotion', price: 15.00, quantity: 1, image: 'https://via.placeholder.com/80' }
-          ],
-          shippingAddress: {
-            name: 'John Doe',
-            address: '123 Main St',
-            city: 'Anytown',
-            state: 'CA',
-            zipCode: '12345',
-            country: 'United States'
-          },
-          paymentMethod: 'Credit Card (****1234)'
-        },
-        {
-          id: 'ORD-12346',
-          date: '2023-05-10',
-          status: 'Processing',
-          total: 89.99,
-          items: [
-            { id: 4, name: 'Body Wash', price: 19.99, quantity: 1, image: 'https://via.placeholder.com/80' },
-            { id: 5, name: 'Face Serum', price: 69.99, quantity: 1, image: 'https://via.placeholder.com/80' }
-          ],
-          shippingAddress: {
-            name: 'John Doe',
-            address: '123 Main St',
-            city: 'Anytown',
-            state: 'CA',
-            zipCode: '12345',
-            country: 'United States'
-          },
-          paymentMethod: 'PayPal'
-        },
-        {
-          id: 'ORD-12347',
-          date: '2023-04-28',
-          status: 'Delivered',
-          total: 149.99,
-          items: [
-            { id: 6, name: 'Hair Conditioner', price: 29.99, quantity: 1, image: 'https://via.placeholder.com/80' },
-            { id: 7, name: 'Facial Cleanser', price: 34.99, quantity: 1, image: 'https://via.placeholder.com/80' },
-            { id: 8, name: 'Body Lotion', price: 24.99, quantity: 2, image: 'https://via.placeholder.com/80' }
-          ],
-          shippingAddress: {
-            name: 'John Doe',
-            address: '123 Main St',
-            city: 'Anytown',
-            state: 'CA',
-            zipCode: '12345',
-            country: 'United States'
-          },
-          paymentMethod: 'Credit Card (****1234)'
-        }
-      ]);
+      if (err.response && err.response.status === 401) {
+        setError('Your session has expired. Please login again.');
+        toast.error('Your session has expired. Please login again.');
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to load orders. Please try again later.');
+        toast.error('Failed to load orders');
+      }
     } finally {
       setLoading(false);
     }

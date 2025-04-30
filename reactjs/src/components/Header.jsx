@@ -95,7 +95,7 @@ const Header = () => {
   ];
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white py-3 fixed-top">
+    <nav className="navbar navbar-expand-lg navbar-light bg-white py-1 fixed-top">
       <div className="container">
         {/* Brand Logo */}
         <Link className="navbar-brand" to="/">
@@ -123,7 +123,7 @@ const Header = () => {
               <Link className="nav-link" to="/shop" onClick={() => setShowMobileMenu(false)}>Shop</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/about" onClick={() => setShowMobileMenu(false)}>About Us</Link>
+              <Link className="nav-link" to="/about" onClick={() => setShowMobileMenu(false)}>About</Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/contact" onClick={() => setShowMobileMenu(false)}>Contact</Link>
