@@ -1,5 +1,8 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -8,28 +11,41 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-
+import { CartProvider } from './context/CartContext';
+import Cart from './pages/Cart';
 
 function App() {
   return (
-    <BrowserRouter>
-    
-      
+    <CartProvider>
+      <Router>
+        <div className="App">
           <Header />
-       
-        <Routes>
-          <Route path="/" element={<Home />} />
-      
-          <Route path="/shop" element={<Shop/>} />
-          <Route path="/about" element={<About/>} />
-          <Route path="/contact" element={<Contact/>} />
-         
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-        <Footer />
-
-    </BrowserRouter>
+          <main>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/cart" element={<Cart />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </CartProvider>
   );
 }
 

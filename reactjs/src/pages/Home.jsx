@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiArrowRight, FiShoppingCart, FiStar, FiClock } from 'react-icons/fi';
 import axios from 'axios';
+import { useCart } from '../context/CartContext';
+import { toast } from 'react-toastify';
 import './home.css'
 
 const Home = () => {
@@ -11,6 +13,7 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,6 +73,18 @@ const Home = () => {
   const filteredProducts = activeCategory === 'all' 
     ? products 
     : products.filter(product => product.category.toLowerCase() === activeCategory);
+
+  const handleAddToCart = (product) => {
+    addToCart(product, 1);
+    toast.success(`${product.name} added to cart!`, {
+      position: "bottom-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+  };
 
   if (error) {
     return <div className="error">Error: {error}</div>;
@@ -206,7 +221,10 @@ const Home = () => {
                   <div className="product-info">
                     <h3>{product.name}</h3>
                     <div className="product-price">${product.price}</div>
-                    <button className="btn btn-primary add-to-cart">
+                    <button 
+                      className="btn btn-primary add-to-cart"
+                      onClick={() => handleAddToCart(product)}
+                    >
                       <FiShoppingCart /> Add to Cart
                     </button>
                   </div>

@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaShoppingCart, FaSignInAlt, FaUserPlus, FaCog, FaHistory, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { useCart } from '../context/CartContext';
 import './header.css';
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [cartItems] = useState(3); // Sample cart items count
   const [user, setUser] = useState({
     name: '',
     email: ''
   });
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const { cartItemsCount } = useCart();
 
   // Function to check login status and update user data
   const checkLoginStatus = () => {
@@ -197,8 +198,8 @@ const Header = () => {
             {/* Shopping Cart */}
             <Link to="/cart" className="cart-btn" onClick={() => setShowMobileMenu(false)}>
               <FaShoppingCart className="cart-icon" />
-              {cartItems > 0 && (
-                <span className="cart-badge">{cartItems}</span>
+              {cartItemsCount > 0 && (
+                <span className="cart-badge">{cartItemsCount}</span>
               )}
             </Link>
           </div>
