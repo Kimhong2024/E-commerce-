@@ -18,7 +18,7 @@ const Header = () => {
 
   // Function to check login status and update user data
   const checkLoginStatus = () => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
     const userName = localStorage.getItem('userName');
     const userEmail = localStorage.getItem('userEmail');
 

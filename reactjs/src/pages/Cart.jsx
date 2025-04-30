@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { FiTrash2, FiMinus, FiPlus, FiArrowLeft } from 'react-icons/fi';
+import { FiTrash2, FiMinus, FiPlus, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import './Cart.css';
 
@@ -114,9 +114,10 @@ const Cart = () => {
               <span>Total</span>
               <span>${calculateTotal().toFixed(2)}</span>
             </div>
-            <button className="checkout-button">
-              Proceed to Checkout
-            </button>
+            <Link to="/checkout" className="checkout-button">
+              <span>Proceed to Checkout</span>
+              <FiArrowRight className="checkout-icon" />
+            </Link>
             <Link to="/shop" className="continue-shopping">
               <FiArrowLeft className="me-2" />
               Continue Shopping

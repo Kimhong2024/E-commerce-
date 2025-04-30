@@ -13,6 +13,8 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import { CartProvider } from './context/CartContext';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Order from './pages/Order';
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<Order />} />
             </Routes>
           </main>
           <Footer />

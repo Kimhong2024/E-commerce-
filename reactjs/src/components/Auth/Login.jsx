@@ -31,31 +31,32 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Here you would typically make an API call to your backend
-      // For now, we'll simulate a successful login
-      console.log('Login attempt with:', formData);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Extract name from email (for demo purposes)
-      // In a real app, this would come from your API response
-      const nameFromEmail = formData.email.split('@')[0];
-      const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-      
-      // Store user data in localStorage
-      localStorage.setItem('userToken', 'dummy-token');
+      const response = await fetch('http://localhost:8000/api/customer/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.data.token);
       localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', formattedName);
+      localStorage.setItem('userName', data.data.customer.name);
       
       // Dispatch a custom event to notify other components about the login
       window.dispatchEvent(new Event('storage'));
       
-      // Redirect to home page or dashboard
+      // Redirect to home page
       navigate('/');
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
-      console.error('Login error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
