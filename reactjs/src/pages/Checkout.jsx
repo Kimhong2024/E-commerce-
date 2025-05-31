@@ -451,15 +451,14 @@ const Checkout = () => {
                     onChange={handleShippingChange}
                   >
                     <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
+                    <option value="Cambodia">Cambodia</option>
                     <option value="United Kingdom">United Kingdom</option>
                     <option value="Australia">Australia</option>
                     <option value="Germany">Germany</option>
                     <option value="France">France</option>
                     <option value="Japan">Japan</option>
                     <option value="China">China</option>
-                    <option value="India">India</option>
-                    <option value="Brazil">Brazil</option>
+                   
                   </select>
                 </div>
                 

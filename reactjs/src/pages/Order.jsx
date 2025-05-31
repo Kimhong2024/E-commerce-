@@ -207,7 +207,7 @@ const Order = () => {
                           <p className="item-quantity">Quantity: {item.quantity}</p>
                         </div>
                         <div className="item-total">
-                          ${(item.total_price || (item.price * item.quantity)).toFixed(2)}
+                          ${Number(item.total_price || (item.price * item.quantity)).toFixed(2)}
                         </div>
                       </div>
                     ))}
